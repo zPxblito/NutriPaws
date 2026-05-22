@@ -200,30 +200,43 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const text = document.getElementById('medical-notes').value;
         if(!text) return;
+        
+        const btn = e.target.querySelector('button');
+        const oldText = btn.innerText;
+        btn.innerText = "Analizando con IA...";
+        btn.disabled = true;
+        
         try {
-            const res = await fetch('http://localhost:5000/api/process_medical_record', {
+            const res = await fetch('/api/process_medical_record', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({pet_id: 1, text: text})
             });
+            
+            if(!res.ok) throw new Error("Error en servidor");
+            
             const data = await res.json();
             
             const calendar = document.getElementById('calendar-events');
             if(calendar.innerHTML.includes('No hay citas')) calendar.innerHTML = '';
             calendar.innerHTML += `
-                <div style="background: rgba(255,255,255,0.1); padding: 0.8rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <strong style="color: var(--brand-green);">${data.event_extracted.type}</strong>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">${data.event_extracted.description}</div>
+                        <strong style="color: var(--brand-green); font-size: 1.1rem;">${data.event_type || 'Nota'}</strong>
+                        <div style="font-size: 0.95rem; color: var(--text-muted); margin-top: 4px;">${data.description || 'Sin descripción'}</div>
                     </div>
                     <div style="text-align: right;">
-                        <span style="font-size: 0.8rem; background: rgba(0,0,0,0.5); padding: 0.2rem 0.5rem; border-radius: 4px;">📅 ${data.event_extracted.scheduled_date}</span>
+                        <span style="font-size: 0.85rem; background: rgba(0,0,0,0.5); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: bold;">📅 ${data.scheduled_date || 'Sin fecha'}</span>
                     </div>
                 </div>
             `;
             document.getElementById('medical-notes').value = '';
         } catch(err) {
-            alert("El backend en Python (localhost:5000) no está corriendo. Simulación fallida.");
+            console.error(err);
+            alert("Error al contactar con la IA para agendar.");
+        } finally {
+            btn.innerText = oldText;
+            btn.disabled = false;
         }
     });
 
