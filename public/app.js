@@ -1509,33 +1509,45 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('create-pet-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const newPet = {
-            id: Date.now(),
-            name: document.getElementById('create-pet-name').value,
-            especie: document.querySelector('input[name="create_especie"]:checked').value,
-            raza: createRazaSelect.value,
-            avatarSrc: tempAvatarSrc,
-            lastPeso: null,
-            lastUnidadPeso: null,
-            lastDieta: null,
-            events: []
-        };
-        
-        const anosIngresados = parseFloat(document.getElementById('create-pet-anos').value) || 0;
-        const mesesIngresados = parseFloat(document.getElementById('create-pet-meses').value) || 0;
-        
-        const birthDate = new Date();
-        birthDate.setFullYear(birthDate.getFullYear() - Math.floor(anosIngresados));
-        birthDate.setMonth(birthDate.getMonth() - Math.floor(mesesIngresados));
-        newPet.birthDate = birthDate.toISOString(); // Guardar como string ISO para Firestore
+        try {
+            const especieInput = document.querySelector('input[name="create_especie"]:checked');
+            if (!especieInput) {
+                alert("Por favor selecciona una especie.");
+                return;
+            }
 
-        pets.push(newPet);
-        activePetIndex = pets.length - 1;
-        await savePetToFirestore(newPet); // Persistencia!
-        
-        renderPets();
-        updatePetSelectors();
-        showView(viewDashboard);
+            const newPet = {
+                id: Date.now(),
+                name: document.getElementById('create-pet-name').value,
+                especie: especieInput.value,
+                raza: createRazaSelect.value,
+                personalidad: document.getElementById('create-pet-personalidad').value || "No especificar",
+                avatarSrc: tempAvatarSrc,
+                lastPeso: null,
+                lastUnidadPeso: null,
+                lastDieta: null,
+                events: []
+            };
+            
+            const anosIngresados = parseFloat(document.getElementById('create-pet-anos').value) || 0;
+            const mesesIngresados = parseFloat(document.getElementById('create-pet-meses').value) || 0;
+            
+            const birthDate = new Date();
+            birthDate.setFullYear(birthDate.getFullYear() - Math.floor(anosIngresados));
+            birthDate.setMonth(birthDate.getMonth() - Math.floor(mesesIngresados));
+            newPet.birthDate = birthDate.toISOString(); // Guardar como string ISO para Firestore
+
+            pets.push(newPet);
+            activePetIndex = pets.length - 1;
+            await savePetToFirestore(newPet); // Persistencia!
+            
+            renderPets();
+            updatePetSelectors();
+            showView(viewDashboard);
+        } catch (err) {
+            console.error("Error en submit:", err);
+            alert("Error al procesar el formulario: " + err.message);
+        }
     });
 
     function renderPets() {
