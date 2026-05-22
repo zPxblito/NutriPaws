@@ -1688,6 +1688,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="btn-primary calc-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; background: linear-gradient(135deg, var(--brand-blue), #1e3a8a);">${btnText}</button>
                     <button class="btn-secondary agenda-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white;">Ver Agenda</button>
                     ${pet.lastDieta ? `<button class="btn-secondary pdf-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; border: 1px solid rgba(148, 163, 184, 0.4); background: rgba(148, 163, 184, 0.1); color: #cbd5e1; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><span class="pdf-spinner" style="display:none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></span> 📄 Exportar Reporte</button>` : ''}
+                    <button class="btn-danger delete-pet-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); color: #fca5a5; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">🗑️ Eliminar</button>
                 </div>
             `;
             container.appendChild(card);
@@ -1744,6 +1745,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 await new Promise(r => setTimeout(r, 1500)); // Simula carga
                 generatePDFReport(p);
                 spinner.style.display = 'none';
+            });
+        });
+
+        document.querySelectorAll('.delete-pet-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const idx = parseInt(e.currentTarget.getAttribute('data-index'));
+                if(confirm('¿Estás seguro de que deseas eliminar esta mascota? Toda su historia médica y nutricional se perderá para siempre.')) {
+                    const petToDelete = pets[idx];
+                    try {
+                        if (currentUser && window.firebaseAuth) {
+                            const petRef = window.firebaseAuth.doc(window.firebaseAuth.db, `users/${currentUser.uid}/pets`, petToDelete.id.toString());
+                            await window.firebaseAuth.deleteDoc(petRef);
+                        }
+                        
+                        pets.splice(idx, 1);
+                        
+                        // Ajustar el activePetIndex
+                        if (activePetIndex === idx) {
+                            activePetIndex = pets.length > 0 ? 0 : -1;
+                        } else if (activePetIndex > idx) {
+                            activePetIndex--;
+                        }
+                        
+                        renderPets();
+                        updatePetSelectors();
+                        
+                        if (activePetIndex !== -1) {
+                            updateDashboardDetails();
+                        } else {
+                            // Redibuja la vista base, renderPets se encargará de mostrar el placeholder.
+                            document.getElementById('dashboard-pet-name').innerText = '--';
+                            showView(viewDashboard); 
+                        }
+                    } catch (error) {
+                        console.error("Error deleting pet:", error);
+                        alert("Hubo un error al eliminar la mascota.");
+                    }
+                }
             });
         });
 
