@@ -284,6 +284,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    document.getElementById('help-resend-email').addEventListener('click', (e) => {
+        e.preventDefault();
+        alert("💡 Para reenviar el correo de verificación:\n\n1. Asegúrate de estar en la opción 'Iniciar Sesión'.\n2. Ingresa tu correo y contraseña.\n3. Haz clic en 'Iniciar Sesión'.\n\nEl sistema detectará que tu cuenta no está verificada y te dará la opción de enviarte un nuevo enlace automáticamente.");
+    });
+
     // Login / Register Form Handler
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
