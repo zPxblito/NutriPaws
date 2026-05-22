@@ -1565,8 +1565,9 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '';
         pets.forEach((pet, index) => {
             const now = new Date();
-            let currentYears = now.getFullYear() - pet.birthDate.getFullYear();
-            let currentMonths = now.getMonth() - pet.birthDate.getMonth();
+            const bDate = new Date(pet.birthDate);
+            let currentYears = now.getFullYear() - bDate.getFullYear();
+            let currentMonths = now.getMonth() - bDate.getMonth();
             if (currentMonths < 0) {
                 currentYears--;
                 currentMonths += 12;
@@ -1767,8 +1768,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if(!currentPet || !currentPet.birthDate) return;
 
             const now = new Date();
-            let currentYears = now.getFullYear() - currentPet.birthDate.getFullYear();
-            let currentMonths = now.getMonth() - currentPet.birthDate.getMonth();
+            const bDate = new Date(currentPet.birthDate);
+            let currentYears = now.getFullYear() - bDate.getFullYear();
+            let currentMonths = now.getMonth() - bDate.getMonth();
             if (currentMonths < 0) {
                 currentYears--;
                 currentMonths += 12;
@@ -2120,7 +2122,8 @@ window.generatePDFReport = function(pet) {
         return;
     }
     
-    const ageY = pet.birthDate ? new Date().getFullYear() - pet.birthDate.getFullYear() : '--';
+    const bDateStr = pet.birthDate ? new Date(pet.birthDate) : null;
+    const ageY = bDateStr ? new Date().getFullYear() - bDateStr.getFullYear() : '--';
     
     // Generar la receta purista directamente calculándola, sin leer HTML sucio del pasado
     const dogRatios = [
