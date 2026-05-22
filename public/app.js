@@ -96,6 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.firebaseAuth) {
             window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
                 if (user) {
+                    // Forzar verificación de correo para usuarios con contraseña
+                    if (user.providerData && user.providerData.some(p => p.providerId === 'password') && !user.emailVerified) {
+                        window.firebaseAuth.signOut(window.firebaseAuth.auth);
+                        return;
+                    }
+                    
                     currentUser = user;
                     const displayName = user.displayName || user.email.split('@')[0];
                     document.getElementById('user-name-display').innerText = displayName;
@@ -258,16 +264,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnSubmit = document.getElementById('btn-submit-email');
         const toggleLink = document.getElementById('toggle-auth-mode');
         
+        const confirmGroup = document.getElementById('confirm-password-group');
+        const confirmInput = document.getElementById('login-password-confirm');
+        
         if (isRegisterMode) {
             title.innerText = "Crea tu Cuenta";
             subtitle.innerText = "Únete a NutriPaws y cuida a tu mascota";
             btnSubmit.innerText = "Registrarse";
             toggleLink.innerText = "¿Ya tienes cuenta? Inicia Sesión";
+            confirmGroup.style.display = 'block';
+            confirmInput.required = true;
         } else {
             title.innerText = "Bienvenido a NutriPaws";
             subtitle.innerText = "Inicia sesión para gestionar el perfil de tu mascota";
             btnSubmit.innerText = "Iniciar Sesión";
             toggleLink.innerText = "¿No tienes cuenta? Regístrate";
+            confirmGroup.style.display = 'none';
+            confirmInput.required = false;
         }
     });
 
@@ -278,6 +291,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;
+        const confirmPassword = document.getElementById('login-password-confirm').value;
+        
+        if (isRegisterMode && password !== confirmPassword) {
+            return alert("Las contraseñas no coinciden. Inténtalo de nuevo.");
+        }
+
         const btnSubmit = document.getElementById('btn-submit-email');
         const originalText = btnSubmit.innerText;
         
@@ -289,12 +308,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isRegisterMode) {
                 // Modo Registro
                 result = await window.firebaseAuth.createUserWithEmailAndPassword(window.firebaseAuth.auth, email, password);
-                alert("¡Cuenta creada exitosamente!");
+                await window.firebaseAuth.sendEmailVerification(result.user);
+                await window.firebaseAuth.signOut(window.firebaseAuth.auth); // Cerrar sesión para forzar la validación
+                
+                alert("¡Cuenta creada exitosamente!\n\nTe hemos enviado un correo de confirmación. Por favor revisa tu bandeja de entrada (y la carpeta de spam) para verificar tu cuenta antes de iniciar sesión.");
+                
+                // Cambiar a modo login
+                document.getElementById('toggle-auth-mode').click(); 
+                document.getElementById('login-form').reset();
+                return; // Evita que siga la ejecución y abra el dashboard
             } else {
                 // Modo Login
                 result = await window.firebaseAuth.signInWithEmailAndPassword(window.firebaseAuth.auth, email, password);
+                
+                if (!result.user.emailVerified) {
+                    await window.firebaseAuth.signOut(window.firebaseAuth.auth);
+                    return alert("Tu correo electrónico aún no ha sido verificado. Por favor revisa tu bandeja de entrada o carpeta de spam para verificarlo.");
+                }
             }
             
+            // Si llega aquí, es un login exitoso y verificado
             document.getElementById('user-name-display').innerText = result.user.displayName || email.split('@')[0];
             showView(viewDashboard);
             document.getElementById('login-form').reset();
