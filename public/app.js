@@ -109,19 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Apple Login
-    document.getElementById('btn-login-apple').addEventListener('click', async () => {
-        if (!window.firebaseAuth) return alert("Cargando servicios de Auth... espera un segundo.");
-        try {
-            const result = await window.firebaseAuth.signInWithPopup(window.firebaseAuth.auth, window.firebaseAuth.appleProvider);
-            document.getElementById('user-name-display').innerText = result.user.displayName || 'Usuario de Apple';
-            showView(viewDashboard);
-        } catch (error) {
-            console.error("Error Apple Login:", error);
-            alert("Error al iniciar sesión con Apple: " + error.message);
-        }
-    });
-
     // Login Form Handler (Email Falso/Local para V1 o habría que hacer signInWithEmailAndPassword)
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
