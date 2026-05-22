@@ -2344,8 +2344,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container) return;
         
         // El PLAN_ID es proporcionado por el usuario tras crearlo en su dashboard de PayPal.
-        // Aquí debes reemplazar 'P-3RX065706M3469222L5IFM4I' con el ID del plan real.
-        const PLAN_ID = 'P-REEMPLAZAR_CON_EL_PLAN_ID_REAL'; 
+        const PLAN_ID = 'P-60536265J9476384GNIIOQ5I'; 
         
         if (window.paypal) {
             window.paypal.Buttons({
