@@ -240,21 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Cron Job Simulator
-    document.getElementById('btn-cron').addEventListener('click', async () => {
-        try {
-            const res = await fetch('http://localhost:5000/api/cron/check_notifications');
-            const data = await res.json();
-            if(data.notifications.length > 0) {
-                alert("🔔 NOTIFICACIÓN ENVIADA: \n" + data.notifications.join('\n'));
-            } else {
-                alert("No hay notificaciones programadas para dentro de 3 días.");
-            }
-        } catch(err) {
-            alert("El backend en Python no está corriendo.");
-        }
-    });
-
     // SkinGuard Image Upload
     const sgInput = document.getElementById('skinguard-input');
     if (sgInput) {
