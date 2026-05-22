@@ -77,8 +77,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (activePetIndex !== -1) {
                 medicalSelect.value = activePetIndex;
                 skinSelect.value = activePetIndex;
+                renderCalendarEvents(activePetIndex);
             }
         }
+    }
+
+    // Escuchar el cambio en el selector de mascotas para el calendario
+    const medSelectGlobal = document.getElementById('medical-pet-select');
+    if (medSelectGlobal) {
+        medSelectGlobal.addEventListener('change', (e) => {
+            renderCalendarEvents(parseInt(e.target.value));
+        });
     }
 
     // Escuchar el estado de Firebase Auth para persistencia automática
@@ -340,6 +349,20 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
+    function renderCalendarEvents(petIndex) {
+        const calendar = document.getElementById('calendar-events');
+        calendar.innerHTML = ''; // Limpiar eventos anteriores
+        
+        const pet = pets[petIndex];
+        if (!pet || !pet.events || pet.events.length === 0) {
+            calendar.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No hay citas agendadas.</p>';
+            return;
+        }
+
+        // Renderizar todos los eventos de la mascota seleccionada
+        pet.events.forEach(evt => renderMedicalEvent(evt));
+    }
+
     async function processMedicalEvents(eventosArr) {
         const medSelect = document.getElementById('medical-pet-select');
         const selectedIdx = medSelect ? parseInt(medSelect.value) : activePetIndex;
@@ -374,7 +397,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({text: text})
             });
             
-            if(!res.ok) throw new Error("Error en servidor");
+            if(!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "Error en servidor");
+            }
             
             const data = await res.json();
             const eventosArr = Array.isArray(data) ? data : [data]; // Compatible con single object u array
@@ -383,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('medical-notes').value = '';
         } catch(err) {
             console.error(err);
-            alert("Error al contactar con la IA para agendar.");
+            alert(err.message || "Error al contactar con la IA para agendar.");
         } finally {
             btn.innerText = oldText;
             btn.disabled = false;
@@ -416,7 +442,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: formData
                 });
                 
-                if(!res.ok) throw new Error("Error en servidor al procesar documento");
+                if(!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || "Error en servidor al procesar documento");
+                }
                 
                 const data = await res.json();
                 const eventosArr = Array.isArray(data) ? data : [data];
@@ -425,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("¡Documento procesado! Eventos agregados a la agenda.");
             } catch(err) {
                 console.error(err);
-                alert("Error al procesar el documento con la IA.");
+                alert(err.message || "Error al procesar el documento con la IA.");
             } finally {
                 btnUploadMed.innerHTML = oldText;
                 btnUploadMed.disabled = false;
@@ -1605,15 +1634,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Normalizar "now" a las 00:00 para comparación justa por día
                 now.setHours(0, 0, 0, 0);
                 
-                const upcomingEvents = pet.events.filter(e => new Date(e.date) >= now);
+                const upcomingEvents = pet.events.filter(e => e.scheduled_date && new Date(e.scheduled_date) >= now);
                 if (upcomingEvents.length > 0) {
-                    upcomingEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    upcomingEvents.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
                     const nextE = upcomingEvents[0];
                     // Formatear fecha (ej: 15 de Mayo)
-                    const d = new Date(nextE.date);
+                    const d = new Date(nextE.scheduled_date);
                     const day = d.getDate() + 1; // Ajuste UTC
                     const month = d.toLocaleString('es-ES', { month: 'short' });
-                    nextEventText = `${day} ${month} - ${nextE.title}`;
+                    nextEventText = `${day} ${month} - ${nextE.event_type || nextE.title || 'Cita'}`;
                 }
             }
 

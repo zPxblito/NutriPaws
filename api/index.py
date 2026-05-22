@@ -55,7 +55,7 @@ Devuelve ÚNICAMENTE un JSON válido que sea una LISTA de objetos (array) con es
         text_resp = re.sub(r'```\n?', '', text_resp)
         return jsonify(json.loads(text_resp.strip()))
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "En estos momentos el servicio de análisis se encuentra al máximo, intente de nuevo en un minuto."}), 503
 
 @app.route('/api/analyze_document', methods=['POST'])
 def analyze_document():
@@ -94,7 +94,7 @@ Extrae todos los eventos médicos relevantes (vacunas próximas, chequeos recome
         return jsonify(json.loads(text_resp.strip()))
         
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "En estos momentos el servicio de análisis se encuentra al máximo, intente de nuevo en un minuto."}), 503
 
 @app.route('/api/skinguard/analyze', methods=['POST'])
 def skinguard_analyze():
@@ -135,12 +135,5 @@ Las opciones para urgencia son: BAJA, MEDIA, ALTA."""
     except Exception as e:
         print("Error en Gemini Vision:", e)
         return jsonify({
-            "diagnostico_presuntivo": "Error de Conexión IA",
-            "probabilidad": "--",
-            "explicacion": f"No se pudo procesar la imagen: {str(e)}",
-            "primeros_auxilios": ["Verifique su conexión."],
-            "urgencia": "MEDIA",
-            "disclaimer": "Fallo temporal del servicio."
-        })
-
-
+            "error": "En estos momentos el servicio de análisis se encuentra al máximo, intente de nuevo en un minuto."
+        }), 503
