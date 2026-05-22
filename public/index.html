@@ -51,14 +51,14 @@
     <main class="container view-section" id="view-login" style="max-width: 500px;">
         <div class="card" style="text-align: center; padding: 3rem 2rem;">
             <h2 style="margin-bottom: 1rem; font-size: 1.8rem;">Bienvenido a NutriPaws</h2>
-            <p style="color: var(--text-muted); margin-bottom: 2.5rem; font-size: 1.1rem;">Inicia sesión para gestionar el perfil de tu mascota</p>
+            <h2 id="auth-title" style="margin-bottom: 1rem; font-size: 1.8rem;">Bienvenido a NutriPaws</h2>
+            <p id="auth-subtitle" style="color: var(--text-muted); margin-bottom: 2.5rem; font-size: 1.1rem;">Inicia sesión para gestionar el perfil de tu mascota</p>
             <div id="login-container">
                 <button id="btn-login-google" style="width: 100%; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px; border: none; background: white; color: #333; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s;">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 24px;" alt="Google">
                     Continuar con Google
                 </button>
-                
-                <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+                  <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
                     <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
                     <span style="padding: 0 1rem; color: var(--text-muted); font-size: 0.9rem;">O usa tu correo</span>
                     <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
@@ -67,13 +67,17 @@
                 <form id="login-form">
                     <div class="form-group" style="text-align: left; margin-bottom: 1.5rem;">
                         <label style="font-size: 1rem;">Correo Electrónico</label>
-                        <input type="email" id="login-email" placeholder="ejemplo@correo.com" required style="padding: 1rem; font-size: 1rem;">
+                        <input type="email" id="login-email" placeholder="ejemplo@correo.com" required style="padding: 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; margin-top: 0.5rem;">
                     </div>
                     <div class="form-group" style="text-align: left; margin-bottom: 2rem;">
                         <label style="font-size: 1rem;">Contraseña</label>
-                        <input type="password" id="login-password" placeholder="••••••••" required style="padding: 1rem; font-size: 1rem;">
+                        <input type="password" id="login-password" placeholder="••••••••" required minlength="6" style="padding: 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; margin-top: 0.5rem;">
                     </div>
-                    <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Iniciar Sesión</button>
+                    <button type="submit" id="btn-submit-email" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 8px;">Iniciar Sesión</button>
+                    
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <a href="#" id="toggle-auth-mode" style="color: var(--primary); text-decoration: none; font-size: 0.95rem;">¿No tienes cuenta? Regístrate</a>
+                    </div>
                 </form>
             </div>
         </div>

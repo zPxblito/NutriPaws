@@ -109,20 +109,69 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Login Form Handler (Email Falso/Local para V1 o habría que hacer signInWithEmailAndPassword)
+    let isRegisterMode = false;
+    
+    // Toggle Login/Register Mode
+    document.getElementById('toggle-auth-mode').addEventListener('click', (e) => {
+        e.preventDefault();
+        isRegisterMode = !isRegisterMode;
+        
+        const title = document.getElementById('auth-title');
+        const subtitle = document.getElementById('auth-subtitle');
+        const btnSubmit = document.getElementById('btn-submit-email');
+        const toggleLink = document.getElementById('toggle-auth-mode');
+        
+        if (isRegisterMode) {
+            title.innerText = "Crea tu Cuenta";
+            subtitle.innerText = "Únete a NutriPaws y cuida a tu mascota";
+            btnSubmit.innerText = "Registrarse";
+            toggleLink.innerText = "¿Ya tienes cuenta? Inicia Sesión";
+        } else {
+            title.innerText = "Bienvenido a NutriPaws";
+            subtitle.innerText = "Inicia sesión para gestionar el perfil de tu mascota";
+            btnSubmit.innerText = "Iniciar Sesión";
+            toggleLink.innerText = "¿No tienes cuenta? Regístrate";
+        }
+    });
+
+    // Login / Register Form Handler
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!window.firebaseAuth) return alert("Cargando servicios de Auth... espera un segundo.");
+        
         const email = document.getElementById('login-email').value;
-        showLoadingLogin();
+        const password = document.getElementById('login-password').value;
+        const btnSubmit = document.getElementById('btn-submit-email');
+        const originalText = btnSubmit.innerText;
+        
+        btnSubmit.innerText = 'Cargando...';
+        btnSubmit.disabled = true;
+        
         try {
-            // Simulamos login de correo por ahora ya que no tenemos pantalla de registro
-            setTimeout(() => {
-                document.getElementById('user-name-display').innerText = email.split('@')[0];
-                showView(viewDashboard);
-                hideLoadingLogin();
-            }, 1000);
-        } catch(err) {
-            hideLoadingLogin();
+            let result;
+            if (isRegisterMode) {
+                // Modo Registro
+                result = await window.firebaseAuth.createUserWithEmailAndPassword(window.firebaseAuth.auth, email, password);
+                alert("¡Cuenta creada exitosamente!");
+            } else {
+                // Modo Login
+                result = await window.firebaseAuth.signInWithEmailAndPassword(window.firebaseAuth.auth, email, password);
+            }
+            
+            document.getElementById('user-name-display').innerText = result.user.displayName || email.split('@')[0];
+            showView(viewDashboard);
+            document.getElementById('login-form').reset();
+        } catch(error) {
+            console.error("Auth Error:", error);
+            // Traducir algunos errores comunes de Firebase
+            let errorMsg = "Ocurrió un error. Verifica tus datos.";
+            if (error.code === 'auth/email-already-in-use') errorMsg = "Este correo ya está registrado. Por favor, inicia sesión.";
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') errorMsg = "Correo o contraseña incorrectos.";
+            if (error.code === 'auth/weak-password') errorMsg = "La contraseña es muy débil. Usa al menos 6 caracteres.";
+            alert(errorMsg);
+        } finally {
+            btnSubmit.innerText = originalText;
+            btnSubmit.disabled = false;
         }
     });
 

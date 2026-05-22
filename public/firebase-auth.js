@@ -3,10 +3,12 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebas
 import { 
     getAuth, 
     signInWithPopup, 
-    GoogleAuthProvider, 
+    GoogleAuthProvider,
     OAuthProvider,
     onAuthStateChanged,
-    signOut
+    signOut,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -34,5 +36,7 @@ window.firebaseAuth = {
     googleProvider,
     appleProvider,
     onAuthStateChanged,
-    signOut
+    signOut,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword
 };
