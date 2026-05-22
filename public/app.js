@@ -227,14 +227,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     observer.observe(document.body, { childList: true, subtree: true });
-
     function showView(view) {
         viewLogin.style.display = 'none';
         viewDashboard.style.display = 'none';
         viewCreatePet.style.display = 'none';
         viewCalculator.style.display = 'none';
         viewCalendar.style.display = 'none';
-        view.style.display = 'block';
+        document.getElementById('view-subscription').style.display = 'none';
+        
+        if (view) {
+            view.style.display = 'block';
+        }
         
         const footer = document.getElementById('main-footer');
         if (footer) {
@@ -242,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if(view === viewDashboard || view === viewCalculator) {
-            menuContainer.style.display = 'block';
+            menuContainer.style.display = 'flex';
         } else {
             menuContainer.style.display = 'none';
         }
