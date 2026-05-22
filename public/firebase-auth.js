@@ -13,7 +13,7 @@ import {
 
 const firebaseConfig = {
   apiKey: "AIzaSyCnp-Zst8ebEfBWu0CGmkvGp1YT6DfTze8",
-  authDomain: "nutripaws-c0d81.firebaseapp.com",
+  authDomain: "nutri-paws.vercel.app",
   projectId: "nutripaws-c0d81",
   storageBucket: "nutripaws-c0d81.firebasestorage.app",
   messagingSenderId: "606825253960",
