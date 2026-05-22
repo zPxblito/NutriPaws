@@ -10,6 +10,17 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc,
+    updateDoc,
+    arrayUnion,
+    collection,
+    getDocs,
+    deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCnp-Zst8ebEfBWu0CGmkvGp1YT6DfTze8",
@@ -25,6 +36,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 // Providers
 const googleProvider = new GoogleAuthProvider();
@@ -32,6 +44,15 @@ const appleProvider = new OAuthProvider('apple.com');
 
 window.firebaseAuth = {
     auth,
+    db,
+    doc,
+    setDoc,
+    getDoc,
+    updateDoc,
+    arrayUnion,
+    collection,
+    getDocs,
+    deleteDoc,
     signInWithPopup,
     googleProvider,
     appleProvider,

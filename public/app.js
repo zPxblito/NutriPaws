@@ -16,15 +16,137 @@ document.addEventListener('DOMContentLoaded', () => {
     let pets = [];
     let activePetIndex = -1;
     let tempAvatarSrc = "";
+    let currentUser = null;
+
+    async function loadPetsFromFirestore() {
+        if (!currentUser || !window.firebaseAuth) return;
+        try {
+            const querySnapshot = await window.firebaseAuth.getDocs(
+                window.firebaseAuth.collection(window.firebaseAuth.db, `users/${currentUser.uid}/pets`)
+            );
+            pets = [];
+            querySnapshot.forEach((doc) => {
+                pets.push(doc.data());
+            });
+            if (pets.length > 0) activePetIndex = 0;
+            else activePetIndex = -1;
+            renderPets();
+            updatePetSelectors(); // Refrescar los selectores de IA
+        } catch (error) {
+            console.error("Error loading pets:", error);
+        }
+    }
+
+    async function savePetToFirestore(pet) {
+        if (!currentUser || !window.firebaseAuth) return;
+        try {
+            const petRef = window.firebaseAuth.doc(window.firebaseAuth.db, `users/${currentUser.uid}/pets`, pet.id.toString());
+            await window.firebaseAuth.setDoc(petRef, pet);
+        } catch (error) {
+            console.error("Error saving pet:", error);
+        }
+    }
+
+    async function saveData() {
+        // Función general que guarda la mascota activa actual si hubo algún cambio
+        if (activePetIndex !== -1 && pets[activePetIndex]) {
+            await savePetToFirestore(pets[activePetIndex]);
+        }
+    }
+
+    function updatePetSelectors() {
+        const medicalSelect = document.getElementById('medical-pet-select');
+        const skinSelect = document.getElementById('skin-pet-select');
+        
+        if (medicalSelect && skinSelect) {
+            medicalSelect.innerHTML = '';
+            skinSelect.innerHTML = '';
+            
+            pets.forEach((pet, index) => {
+                const opt1 = document.createElement('option');
+                opt1.value = index;
+                opt1.textContent = pet.name;
+                medicalSelect.appendChild(opt1);
+                
+                const opt2 = document.createElement('option');
+                opt2.value = index;
+                opt2.textContent = pet.name;
+                skinSelect.appendChild(opt2);
+            });
+
+            if (activePetIndex !== -1) {
+                medicalSelect.value = activePetIndex;
+                skinSelect.value = activePetIndex;
+            }
+        }
+    }
+
+    // Escuchar el estado de Firebase Auth para persistencia automática
+    // Utilizamos setTimeout leve para asegurar que firebaseAuth se inyectó
+    setTimeout(() => {
+        if (window.firebaseAuth) {
+            window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    const displayName = user.displayName || user.email.split('@')[0];
+                    document.getElementById('user-name-display').innerText = displayName;
+                    showView(viewDashboard);
+                    await loadPetsFromFirestore();
+                } else {
+                    currentUser = null;
+                    pets = [];
+                    activePetIndex = -1;
+                    renderPets();
+                    updatePetSelectors();
+                    showView(viewLogin);
+                }
+            });
+        }
+    }, 50);
     
-    // Resplandor del Cursor
+    // Resplandor del Cursor Estilo Antigravity
     const cursorGlow = document.createElement('div');
     cursorGlow.id = 'cursor-glow';
     document.body.appendChild(cursorGlow);
+    
+    const cursorDot = document.createElement('div');
+    cursorDot.id = 'cursor-dot';
+    document.body.appendChild(cursorDot);
+
     document.addEventListener('mousemove', (e) => {
+        // El dot sigue al mouse instantáneamente
+        cursorDot.style.left = e.clientX + 'px';
+        cursorDot.style.top = e.clientY + 'px';
+        
+        // El glow tiene inercia gracias a la transición CSS
         cursorGlow.style.left = e.clientX + 'px';
         cursorGlow.style.top = e.clientY + 'px';
     });
+
+    // Añadir clase al body cuando se hace hover sobre elementos clickeables
+    const clickableElements = document.querySelectorAll('button, a, select, input[type="file"], .card-content');
+    clickableElements.forEach(el => {
+        el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+        el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+    });
+    
+    // Y observar el DOM para nuevos elementos clickeables (como los botones que se crean dinámicamente)
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.addedNodes.length) {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1) { // ELEMENT_NODE
+                        const newClickables = node.querySelectorAll ? node.querySelectorAll('button, a, select, .card-content') : [];
+                        newClickables.forEach(el => {
+                            el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+                            el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+                        });
+                    }
+                });
+            }
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 
     function showView(view) {
         viewLogin.style.display = 'none';
@@ -195,41 +317,63 @@ document.addEventListener('DOMContentLoaded', () => {
         showView(viewDashboard);
     });
     
-    // Simular envío de registros
+    // Helpers de visualización de eventos
+    function renderMedicalEvent(evento) {
+        const calendar = document.getElementById('calendar-events');
+        if(calendar.innerHTML.includes('No hay citas')) calendar.innerHTML = '';
+        calendar.innerHTML += `
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong style="color: var(--brand-green); font-size: 1.1rem;">${evento.event_type || 'Nota'}</strong>
+                    <div style="font-size: 0.95rem; color: var(--text-muted); margin-top: 4px;">${evento.description || 'Sin descripción'}</div>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 0.85rem; background: rgba(0,0,0,0.5); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: bold;">📅 ${evento.scheduled_date || 'Sin fecha'}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    async function processMedicalEvents(eventosArr) {
+        const medSelect = document.getElementById('medical-pet-select');
+        const selectedIdx = medSelect ? parseInt(medSelect.value) : activePetIndex;
+
+        if (!isNaN(selectedIdx) && selectedIdx !== -1 && pets[selectedIdx]) {
+            const pet = pets[selectedIdx];
+            if (!pet.events) pet.events = [];
+            
+            eventosArr.forEach(evt => {
+                pet.events.push(evt);
+                renderMedicalEvent(evt);
+            });
+            await savePetToFirestore(pet); // Guardado en DB
+        }
+    }
+
+    // Procesar texto médico
     document.getElementById('medical-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const text = document.getElementById('medical-notes').value;
         if(!text) return;
         
-        const btn = e.target.querySelector('button');
+        const btn = document.getElementById('btn-process-medical');
         const oldText = btn.innerText;
-        btn.innerText = "Analizando con IA...";
+        btn.innerText = "Analizando...";
         btn.disabled = true;
         
         try {
             const res = await fetch('/api/process_medical_record', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({pet_id: 1, text: text})
+                body: JSON.stringify({text: text})
             });
             
             if(!res.ok) throw new Error("Error en servidor");
             
             const data = await res.json();
+            const eventosArr = Array.isArray(data) ? data : [data]; // Compatible con single object u array
+            await processMedicalEvents(eventosArr);
             
-            const calendar = document.getElementById('calendar-events');
-            if(calendar.innerHTML.includes('No hay citas')) calendar.innerHTML = '';
-            calendar.innerHTML += `
-                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong style="color: var(--brand-green); font-size: 1.1rem;">${data.event_type || 'Nota'}</strong>
-                        <div style="font-size: 0.95rem; color: var(--text-muted); margin-top: 4px;">${data.description || 'Sin descripción'}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <span style="font-size: 0.85rem; background: rgba(0,0,0,0.5); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: bold;">📅 ${data.scheduled_date || 'Sin fecha'}</span>
-                    </div>
-                </div>
-            `;
             document.getElementById('medical-notes').value = '';
         } catch(err) {
             console.error(err);
@@ -239,6 +383,50 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = false;
         }
     });
+
+    // Subir y procesar documento médico
+    const btnUploadMed = document.getElementById('btn-upload-medical-doc');
+    const inputMedDoc = document.getElementById('medical-doc-input');
+
+    if (btnUploadMed && inputMedDoc) {
+        btnUploadMed.addEventListener('click', () => {
+            inputMedDoc.click();
+        });
+
+        inputMedDoc.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const oldText = btnUploadMed.innerHTML;
+            btnUploadMed.innerHTML = "Subiendo...";
+            btnUploadMed.disabled = true;
+
+            const formData = new FormData();
+            formData.append('document', file);
+
+            try {
+                const res = await fetch('/api/analyze_document', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if(!res.ok) throw new Error("Error en servidor al procesar documento");
+                
+                const data = await res.json();
+                const eventosArr = Array.isArray(data) ? data : [data];
+                await processMedicalEvents(eventosArr);
+                
+                alert("¡Documento procesado! Eventos agregados a la agenda.");
+            } catch(err) {
+                console.error(err);
+                alert("Error al procesar el documento con la IA.");
+            } finally {
+                btnUploadMed.innerHTML = oldText;
+                btnUploadMed.disabled = false;
+                inputMedDoc.value = ''; // Reset
+            }
+        });
+    }
 
     // SkinGuard Image Upload
     const sgInput = document.getElementById('skinguard-input');
@@ -259,8 +447,8 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('image', file);
 
             try {
-                // Hacer POST al backend real con Gemini
-                const res = await fetch('http://localhost:5000/api/skinguard/analyze', {
+                // Hacer POST al backend
+                const res = await fetch('/api/skinguard/analyze', {
                     method: 'POST',
                     body: formData
                 });
@@ -296,8 +484,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     resultsDiv.style.display = 'block';
 
                     // Guardar historial dermatológico
-                    if (typeof activePetIndex !== 'undefined' && activePetIndex !== -1 && pets[activePetIndex]) {
-                        const cp = pets[activePetIndex];
+                    const skinSelect = document.getElementById('skin-pet-select');
+                    const selectedIdx = skinSelect ? parseInt(skinSelect.value) : activePetIndex;
+                    
+                    if (!isNaN(selectedIdx) && selectedIdx !== -1 && pets[selectedIdx]) {
+                        const cp = pets[selectedIdx];
                         if (!cp.skinHistory) cp.skinHistory = [];
                         cp.skinHistory.push({
                             diagnostico: data.diagnostico_presuntivo,
@@ -306,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             explicacion: data.explicacion,
                             date: new Date().toISOString()
                         });
-                        if (typeof saveData === 'function') saveData();
+                        await savePetToFirestore(cp); // Guardar persistentemente
                     }
                 }
             } catch (err) {
@@ -1330,10 +1521,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const birthDate = new Date();
         birthDate.setFullYear(birthDate.getFullYear() - Math.floor(anosIngresados));
         birthDate.setMonth(birthDate.getMonth() - Math.floor(mesesIngresados));
-        newPet.birthDate = birthDate;
+        newPet.birthDate = birthDate.toISOString(); // Guardar como string ISO para Firestore
 
         pets.push(newPet);
+        activePetIndex = pets.length - 1;
+        await savePetToFirestore(newPet); // Persistencia!
+        
         renderPets();
+        updatePetSelectors();
         showView(viewDashboard);
     });
 

@@ -3,10 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NutriPaws | Asistente Integral</title>
+    <title>NutriPaws | El Mejor Asistente de Salud y Nutrición para tu Mascota</title>
+    
+    <!-- SEO Básico -->
+    <meta name="description" content="NutriPaws es tu asistente inteligente para mascotas. Calcula dietas BARF, agenda chequeos médicos, guarda historiales y detecta problemas de piel con nuestra IA dermatológica.">
+    <meta name="keywords" content="mascotas, nutrición canina, dieta BARF, veterinario IA, salud animal, perros, gatos, calendario mascotas">
+    <meta name="author" content="NutriPaws">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
+    <meta property="og:title" content="NutriPaws | Asistente Inteligente para Mascotas">
+    <meta property="og:description" content="Calcula dietas, analiza la piel con IA y agenda los chequeos de tu mejor amigo.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nutripaws.app">
+    <meta property="og:image" content="https://nutripaws.app/assets/logo-fondo.png">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NutriPaws | Salud e IA para tu Mascota">
+    <meta name="twitter:description" content="La herramienta definitiva para dueños responsables. Nutrición, calendario y diagnósticos con IA.">
+
     <link rel="icon" type="image/png" href="assets/logo-fondo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=4">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         /* Ajustes extra para descompactar la UI */
@@ -100,20 +119,26 @@
 
         <!-- Módulo: Registros Médicos y Calendario -->
         <div class="dashboard-grid" style="margin-bottom: 2.5rem;">
-            <!-- Columna 1: Subida de Registros -->
-            <div class="card" style="padding: 2rem;">
-                <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem;">🏥 Registro Médico</h3>
-                <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
-                    Escribe notas o sube un PDF. La IA de NutriPaws lo analizará y agendará tus próximos cuidados.
+            <div class="card" style="grid-column: span 2;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="font-size: 1.5rem; margin: 0;">🏥 Registro Médico IA</h2>
+                    <select id="medical-pet-select" style="padding: 0.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white;"></select>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;">
+                    Escribe notas o sube un documento. La IA de NutriPaws extraerá los eventos (vacunas, medicinas, chequeos) y los añadirá a la agenda de la mascota seleccionada automáticamente.
                 </p>
+                
                 <form id="medical-form">
                     <textarea id="medical-notes" placeholder="Ej: Hoy le tocaba la Séxtuple pero el doc dijo que volvamos en 5 días..." style="width: 100%; height: 120px; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-family: inherit; margin-bottom: 1.5rem; resize: none; font-size: 1rem;"></textarea>
                     
-                    <div style="border: 2px dashed rgba(255,255,255,0.2); padding: 1.5rem; text-align: center; border-radius: 12px; margin-bottom: 1.5rem; cursor: pointer; background: rgba(255,255,255,0.02); transition: background 0.3s;">
-                        📄 Subir PDF o Foto del Registro
+                    <div style="display: flex; gap: 1rem;">
+                        <button id="btn-process-medical" class="btn-primary" style="flex: 1;">Analizar y Agendar</button>
+                        <button type="button" id="btn-upload-medical-doc" class="btn-secondary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                            Subir PDF/Foto
+                        </button>
+                        <input type="file" id="medical-doc-input" accept=".pdf,image/*" style="display: none;">
                     </div>
-                    
-                    <button type="submit" class="btn-primary" style="padding: 1rem; font-size: 1.1rem; width: 100%;">Analizar y Guardar</button>
                 </form>
             </div>
 
@@ -128,11 +153,14 @@
 
         <!-- Módulo: AI-SkinGuard -->
         <div class="card" style="margin-bottom: 2.5rem; padding: 2.5rem; border: 1px solid rgba(16, 185, 129, 0.3); background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(6, 78, 59, 0.4));">
-            <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: #34d399; display: flex; align-items: center; gap: 0.5rem;">
-                Análisis de Piel
-            </h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.5rem; margin: 0; color: #34d399; display: flex; align-items: center; gap: 0.5rem;">
+                    Análisis de Piel
+                </h3>
+                <select id="skin-pet-select" style="padding: 0.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white;"></select>
+            </div>
             <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px;">
-                ¿Tu peludo tiene un sarpullido, costra o zona sin pelo? Sube una foto y nuestra IA dermatológica te dará una evaluación instantánea.
+                ¿Tu peludo tiene un sarpullido, costra o zona sin pelo? Sube una foto y nuestra IA dermatológica te dará una evaluación instantánea, y la guardará en el expediente de la mascota seleccionada.
             </p>
             
             <div id="skinguard-upload-area" style="border: 2px dashed rgba(52, 211, 153, 0.4); border-radius: 12px; padding: 2rem; text-align: center; background: rgba(0,0,0,0.2); cursor: pointer; transition: all 0.3s; margin-bottom: 1.5rem; position: relative; overflow: hidden;">
@@ -415,7 +443,10 @@
                 <a href="#" style="color: var(--brand-green); font-size: 1rem; text-decoration: none; font-weight: bold; border: 2px solid var(--brand-green); padding: 0.5rem 1rem; border-radius: 8px;">Facebook</a>
             </div>
             
-            <p style="color: var(--text-muted); font-size: 0.9rem;">&copy; 2025-2026 NutriPaws. Todos los derechos reservados.</p>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                &copy; 2025-2026 NutriPaws. Todos los derechos reservados. | 
+                <a href="privacy.html" style="color: var(--brand-green); text-decoration: none; font-weight: bold;">Políticas de Privacidad</a>
+            </p>
         </div>
     </footer>
 

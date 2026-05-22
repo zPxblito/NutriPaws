@@ -22,6 +22,8 @@ def login():
     # este endpoint queda solo para verificar tokens si es necesario en el futuro.
     return jsonify({"status": "success", "user_id": "firebase-user"})
 
+import datetime
+
 @app.route('/api/process_medical_record', methods=['POST'])
 def process_record():
     data = request.json
@@ -30,13 +32,18 @@ def process_record():
     if not client:
         return jsonify({"error": "API Key no configurada"}), 500
 
+    fecha_hoy = datetime.datetime.now().strftime("%Y-%m-%d")
+
     prompt = f"""Extrae la siguiente información médica de este texto: '{text}'.
-Devuelve ÚNICAMENTE un JSON válido con esta estructura:
-{{
-  "event_type": "Vacuna | Chequeo | Pastilla | Nota",
-  "description": "descripción corta",
-  "scheduled_date": "YYYY-MM-DD (si aplica, o null)"
-}}"""
+IMPORTANTE: Ten en cuenta que la fecha de hoy es {fecha_hoy}. Si el texto dice "en 3 días", suma 3 días a la fecha de hoy.
+Devuelve ÚNICAMENTE un JSON válido que sea una LISTA de objetos (array) con esta estructura:
+[
+  {{
+    "event_type": "Vacuna | Chequeo | Pastilla | Nota",
+    "description": "descripción corta",
+    "scheduled_date": "YYYY-MM-DD (si aplica, o null)"
+  }}
+]"""
     
     try:
         response = client.models.generate_content(
@@ -47,6 +54,45 @@ Devuelve ÚNICAMENTE un JSON válido con esta estructura:
         text_resp = re.sub(r'```json\n?', '', text_resp)
         text_resp = re.sub(r'```\n?', '', text_resp)
         return jsonify(json.loads(text_resp.strip()))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/analyze_document', methods=['POST'])
+def analyze_document():
+    if 'document' not in request.files:
+        return jsonify({"error": "No document provided"}), 400
+        
+    file = request.files['document']
+    
+    if not client:
+        return jsonify({"error": "API Key no configurada"}), 500
+
+    fecha_hoy = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    try:
+        img = PIL.Image.open(file.stream)
+        
+        prompt = f"""Eres un asistente veterinario experto. Lee este documento/registro médico.
+IMPORTANTE: Ten en cuenta que la fecha de hoy es {fecha_hoy}. Si se mencionan días relativos como "volver en una semana", suma esos días a la fecha de hoy.
+Extrae todos los eventos médicos relevantes (vacunas próximas, chequeos recomendados, tratamientos recetados) y devuelve ÚNICAMENTE un JSON válido que sea una LISTA de objetos (array) con esta estructura:
+[
+  {{
+    "event_type": "Vacuna | Chequeo | Pastilla | Tratamiento",
+    "description": "descripción corta de lo que hay que hacer o lo que se hizo",
+    "scheduled_date": "YYYY-MM-DD (si se menciona una fecha futura o específica, si no se sabe pon null)"
+  }}
+]"""
+        
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[prompt, img]
+        )
+        
+        text_resp = response.text
+        text_resp = re.sub(r'```json\n?', '', text_resp)
+        text_resp = re.sub(r'```\n?', '', text_resp)
+        return jsonify(json.loads(text_resp.strip()))
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
