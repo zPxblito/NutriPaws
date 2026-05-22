@@ -336,14 +336,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderMedicalEvent(evento) {
         const calendar = document.getElementById('calendar-events');
         if(calendar.innerHTML.includes('No hay citas')) calendar.innerHTML = '';
+        
+        const typeOrTitle = evento.event_type || evento.title || 'Evento';
+        const desc = evento.description || '';
+        const scheduled = evento.scheduled_date || evento.date ? new Date(evento.scheduled_date || evento.date).toISOString().split('T')[0] : 'Sin fecha';
+        
         calendar.innerHTML += `
             <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <strong style="color: var(--brand-green); font-size: 1.1rem;">${evento.event_type || 'Nota'}</strong>
-                    <div style="font-size: 0.95rem; color: var(--text-muted); margin-top: 4px;">${evento.description || 'Sin descripción'}</div>
+                    <strong style="color: var(--brand-green); font-size: 1.1rem;">${typeOrTitle}</strong>
+                    ${desc ? `<div style="font-size: 0.95rem; color: var(--text-muted); margin-top: 4px;">${desc}</div>` : ''}
                 </div>
                 <div style="text-align: right;">
-                    <span style="font-size: 0.85rem; background: rgba(0,0,0,0.5); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: bold;">📅 ${evento.scheduled_date || 'Sin fecha'}</span>
+                    <span style="font-size: 0.85rem; background: rgba(0,0,0,0.5); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: bold;">📅 ${scheduled}</span>
                 </div>
             </div>
         `;
@@ -376,6 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderMedicalEvent(evt);
             });
             await savePetToFirestore(pet); // Guardado en DB
+            renderPets(); // Actualizar las tarjetas para mostrar el nuevo Próximo Evento
         }
     }
 
@@ -1634,12 +1640,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Normalizar "now" a las 00:00 para comparación justa por día
                 now.setHours(0, 0, 0, 0);
                 
-                const upcomingEvents = pet.events.filter(e => e.scheduled_date && new Date(e.scheduled_date) >= now);
+                const upcomingEvents = pet.events.filter(e => {
+                    const evtDate = e.scheduled_date || e.date;
+                    return evtDate && new Date(evtDate) >= now;
+                });
                 if (upcomingEvents.length > 0) {
-                    upcomingEvents.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
+                    upcomingEvents.sort((a, b) => new Date(a.scheduled_date || a.date) - new Date(b.scheduled_date || b.date));
                     const nextE = upcomingEvents[0];
                     // Formatear fecha (ej: 15 de Mayo)
-                    const d = new Date(nextE.scheduled_date);
+                    const d = new Date(nextE.scheduled_date || nextE.date);
                     const day = d.getDate() + 1; // Ajuste UTC
                     const month = d.toLocaleString('es-ES', { month: 'short' });
                     nextEventText = `${day} ${month} - ${nextE.event_type || nextE.title || 'Cita'}`;
@@ -2024,7 +2033,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let dayEvent = null;
             if(currentPet && currentPet.events) {
                 dayEvent = currentPet.events.find(e => {
-                    const eDate = new Date(e.date);
+                    const dateStr = e.scheduled_date || e.date;
+                    if(!dateStr) return false;
+                    const eDate = new Date(dateStr);
                     eDate.setHours(0,0,0,0);
                     return eDate.getTime() === cellDate.getTime();
                 });
@@ -2086,7 +2097,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const titleInput = document.getElementById('new-event-title');
         
         if (existingEvent) {
-            existingDiv.innerHTML = `📌 Toca hoy: <br><span style="color:white; font-size:1.3rem;">${existingEvent.title}</span>`;
+            const evTitle = existingEvent.event_type || existingEvent.title || 'Evento';
+            const evDesc = existingEvent.description || '';
+            existingDiv.innerHTML = `📌 Toca hoy: <br><span style="color:white; font-size:1.3rem;">${evTitle}</span><br><span style="font-size: 0.9rem; color: var(--text-muted);">${evDesc}</span>`;
             existingDiv.style.display = 'block';
             titleInput.placeholder = "Reemplazar evento actual...";
             titleInput.value = "";
