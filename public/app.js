@@ -1500,7 +1500,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Guardar Perfil (Create Pet)
-    document.getElementById('create-pet-form').addEventListener('submit', (e) => {
+    document.getElementById('create-pet-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const newPet = {
