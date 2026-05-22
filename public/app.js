@@ -1688,7 +1688,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="btn-primary calc-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; background: linear-gradient(135deg, var(--brand-blue), #1e3a8a);">${btnText}</button>
                     <button class="btn-secondary agenda-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white;">Ver Agenda</button>
                     ${pet.lastDieta ? `<button class="btn-secondary pdf-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; border: 1px solid rgba(148, 163, 184, 0.4); background: rgba(148, 163, 184, 0.1); color: #cbd5e1; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><span class="pdf-spinner" style="display:none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></span> 📄 Exportar Reporte</button>` : ''}
-                    <button class="btn-danger delete-pet-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); color: #fca5a5; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">🗑️ Eliminar</button>
+                    <button class="btn-danger delete-pet-btn" data-index="${index}" title="Eliminar mascota" style="padding: 0.6rem 0.8rem; border-radius: 8px; transition: transform 0.2s; border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); color: #fca5a5; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
                 </div>
             `;
             container.appendChild(card);
