@@ -97,12 +97,4 @@ Las opciones para urgencia son: BAJA, MEDIA, ALTA."""
             "disclaimer": "Fallo temporal del servicio."
         })
 
-from flask import send_from_directory
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_frontend(path):
-    if path != "" and os.path.exists(os.path.join("public", path)):
-        return send_from_directory("public", path)
-    else:
-        return send_from_directory("public", "index.html")
