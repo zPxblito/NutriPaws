@@ -104,23 +104,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 50);
     
-    // Resplandor del Cursor Estilo Antigravity
-    const cursorGlow = document.createElement('div');
-    cursorGlow.id = 'cursor-glow';
-    document.body.appendChild(cursorGlow);
-    
-    const cursorDot = document.createElement('div');
-    cursorDot.id = 'cursor-dot';
-    document.body.appendChild(cursorDot);
+    // Múltiples puntitos verdes que persiguen el cursor
+    const numDots = 5;
+    const dots = [];
+    for (let i = 0; i < numDots; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'cursor-trail-dot';
+        // Reducimos la opacidad en cada punto para un efecto de estela
+        dot.style.opacity = 1 - (i * 0.15);
+        // Hacemos que cada punto sea un poco más pequeño
+        const size = 6 - i;
+        dot.style.width = size + 'px';
+        dot.style.height = size + 'px';
+        // Añadimos un delay diferente a la transición de cada punto
+        dot.style.transition = `left ${0.05 + i * 0.05}s linear, top ${0.05 + i * 0.05}s linear, transform 0.1s ease`;
+        document.body.appendChild(dot);
+        dots.push(dot);
+    }
 
     document.addEventListener('mousemove', (e) => {
-        // El dot sigue al mouse instantáneamente
-        cursorDot.style.left = e.clientX + 'px';
-        cursorDot.style.top = e.clientY + 'px';
-        
-        // El glow tiene inercia gracias a la transición CSS
-        cursorGlow.style.left = e.clientX + 'px';
-        cursorGlow.style.top = e.clientY + 'px';
+        dots.forEach((dot) => {
+            dot.style.left = e.clientX + 'px';
+            dot.style.top = e.clientY + 'px';
+        });
     });
 
     // Añadir clase al body cuando se hace hover sobre elementos clickeables

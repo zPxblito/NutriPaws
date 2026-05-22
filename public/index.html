@@ -103,9 +103,9 @@
 
     <!-- ================= VISTA 2: DASHBOARD ================= -->
     <main class="container view-section" id="view-dashboard" style="display: none; max-width: 1000px; width: 100%;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h2 style="font-size: 2rem;">Hola, <span id="user-name-display">Usuario</span> <button id="edit-name-btn" style="background:none; border:none; color: var(--text-muted); cursor:pointer; font-size: 1.2rem; transition: transform 0.2s;" title="Editar nombre">✏️</button> 👋</h2>
-            <button class="btn-primary" id="btn-goto-create-pet" style="padding: 0.8rem 1.5rem; font-size: 1rem; border-radius: 12px; transition: transform 0.2s;">+ Añadir Mascota</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 3rem;">
+            <h2 style="font-size: 2.2rem; margin: 0;">Hola, <span id="user-name-display">Usuario</span> <button id="edit-name-btn" style="background:none; border:none; color: var(--text-muted); cursor:pointer; font-size: 1.4rem; transition: transform 0.2s; margin-left: 0.5rem;" title="Editar nombre">✏️</button> 👋</h2>
+            <button class="btn-primary" id="btn-goto-create-pet" style="padding: 1rem 2rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s;">+ Añadir Mascota</button>
         </div>
 
         <!-- Contenedor Dinámico de Mascotas -->
@@ -257,9 +257,9 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 2rem;">
+                <div class="form-group" style="margin-bottom: 3rem;">
                     <label style="font-size: 1.1rem;">Personalidad (Opcional) 💖</label>
-                    <select id="create-pet-personalidad" style="padding: 1rem; font-size: 1.1rem;">
+                    <select id="create-pet-personalidad" style="padding: 1rem; font-size: 1.1rem; width: 100%;">
                         <option value="">No especificar</option>
                         <option value="jugueton">Muy juguetón / Activo</option>
                         <option value="dormilon">Dormilón / Tranquilo</option>
@@ -269,7 +269,7 @@
                     </select>
                 </div>
 
-                <button type="submit" class="btn-primary" style="padding: 1.2rem; font-size: 1.2rem; width: 100%; border-radius: 12px;">Guardar Perfil</button>
+                <button type="submit" class="btn-primary" style="padding: 1.2rem; font-size: 1.2rem; width: 100%; border-radius: 12px; margin-top: 1rem;">Guardar Perfil</button>
             </form>
         </div>
     </main>

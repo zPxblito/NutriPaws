@@ -119,42 +119,22 @@ header {
     font-size: 2.2rem;
 }
 
-/* Resplandor del Cursor Estilo Antigravity */
-#cursor-dot {
+/* Resplandor del Cursor Estilo Antigravity - Trail */
+.cursor-trail-dot {
     position: fixed;
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     background: var(--brand-green);
     border-radius: 50%;
     pointer-events: none;
     transform: translate(-50%, -50%);
-    z-index: 10000;
+    z-index: 9999;
     transition: transform 0.1s ease;
 }
 
-#cursor-glow {
-    position: fixed;
-    width: 40px;
-    height: 40px;
-    background: transparent;
-    border: 1px solid rgba(141, 198, 63, 0.4);
-    box-shadow: 0 0 20px 5px rgba(141, 198, 63, 0.1);
-    border-radius: 50%;
-    pointer-events: none;
-    transform: translate(-50%, -50%);
-    z-index: 9999;
-    /* La transición crea la inercia */
-    transition: left 0.15s cubic-bezier(0.25, 1, 0.5, 1), top 0.15s cubic-bezier(0.25, 1, 0.5, 1), width 0.2s, height 0.2s, background-color 0.2s;
-}
-
-/* Efecto hover */
-body.cursor-hover #cursor-glow {
-    width: 60px;
-    height: 60px;
-    background: rgba(141, 198, 63, 0.1);
-}
-body.cursor-hover #cursor-dot {
-    transform: translate(-50%, -50%) scale(0);
+body.cursor-hover .cursor-trail-dot {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0.5;
 }
 
 .subtitle {
