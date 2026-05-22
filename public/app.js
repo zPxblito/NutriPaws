@@ -105,8 +105,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentUser = user;
                     const displayName = user.displayName || user.email.split('@')[0];
                     document.getElementById('user-name-display').innerText = displayName;
-                    showView(viewDashboard);
-                    await loadPetsFromFirestore();
+                    
+                    // Lógica de Suscripción / Trial
+                    const userDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, 'users', currentUser.uid);
+                    try {
+                        let userDoc = await window.firebaseAuth.getDoc(userDocRef);
+                        
+                        if (!userDoc.exists()) {
+                            // Crear documento por primera vez
+                            const now = Date.now();
+                            const trialEndsAt = now + (7 * 24 * 60 * 60 * 1000); // 7 días
+                            await window.firebaseAuth.setDoc(userDocRef, {
+                                createdAt: now,
+                                trialEndsAt: trialEndsAt,
+                                subscriptionStatus: 'trial',
+                                email: user.email
+                            });
+                            userDoc = await window.firebaseAuth.getDoc(userDocRef);
+                        }
+                        
+                        const userData = userDoc.data();
+                        const now = Date.now();
+                        
+                        if (now > userData.trialEndsAt && userData.subscriptionStatus !== 'active') {
+                            // Trial expirado y no tiene suscripción activa
+                            showView(document.getElementById('view-subscription'));
+                            renderPayPalButtons();
+                        } else {
+                            // Trial activo o suscripción pagada
+                            showView(viewDashboard);
+                            await loadPetsFromFirestore();
+                        }
+                    } catch (error) {
+                        console.error("Error validando suscripción:", error);
+                        // Fallback de seguridad, enviarlo al dashboard
+                        showView(viewDashboard);
+                        await loadPetsFromFirestore();
+                    }
                 } else {
                     currentUser = null;
                     pets = [];
@@ -2289,7 +2324,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         closeEventModal();
     });
+    // =========================================================================
+    // LÓGICA DE SUSCRIPCIONES Y PAYPAL
+    // =========================================================================
+    
+    document.getElementById('btn-logout-subscription').addEventListener('click', async () => {
+        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+            await window.firebaseAuth.signOut(window.firebaseAuth.auth);
+            showView(viewLogin);
+        }
+    });
 
+    let paypalRendered = false;
+    
+    function renderPayPalButtons() {
+        if (paypalRendered) return;
+        
+        const container = document.getElementById('paypal-button-container');
+        if (!container) return;
+        
+        // El PLAN_ID es proporcionado por el usuario tras crearlo en su dashboard de PayPal.
+        // Aquí debes reemplazar 'P-3RX065706M3469222L5IFM4I' con el ID del plan real.
+        const PLAN_ID = 'P-REEMPLAZAR_CON_EL_PLAN_ID_REAL'; 
+        
+        if (window.paypal) {
+            window.paypal.Buttons({
+                style: {
+                    shape: 'rect',
+                    color: 'blue',
+                    layout: 'vertical',
+                    label: 'subscribe'
+                },
+                createSubscription: function(data, actions) {
+                    return actions.subscription.create({
+                        /* Creates the subscription */
+                        plan_id: PLAN_ID,
+                        custom_id: currentUser.uid // Pasamos el UID para que el Webhook sepa a quién activar
+                    });
+                },
+                onApprove: function(data, actions) {
+                    alert('¡Suscripción aprobada! Tu panel se desbloqueará en los próximos minutos una vez que PayPal confirme el pago a nuestro sistema.');
+                    // Nota: El backend recibirá el webhook y actualizará Firestore.
+                    // Opcionalmente podemos forzar un refresh manual aquí si quisiéramos.
+                },
+                onError: function(err) {
+                    console.error("Error en PayPal:", err);
+                    alert("Ocurrió un error al intentar abrir la pasarela de pago.");
+                }
+            }).render('#paypal-button-container');
+            paypalRendered = true;
+        } else {
+            console.error("El SDK de PayPal no se ha cargado.");
+        }
+    }
 });
 
 // ================= GENERACIÓN DE PDF =================
