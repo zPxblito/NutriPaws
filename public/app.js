@@ -308,7 +308,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isRegisterMode) {
                 // Modo Registro
                 result = await window.firebaseAuth.createUserWithEmailAndPassword(window.firebaseAuth.auth, email, password);
-                await window.firebaseAuth.sendEmailVerification(result.user);
+                
+                // Configurar redirección para el correo
+                const actionCodeSettings = {
+                    url: window.location.origin, // Redirigir a la app tras verificar
+                    handleCodeInApp: false
+                };
+                
+                await window.firebaseAuth.sendEmailVerification(result.user, actionCodeSettings);
                 await window.firebaseAuth.signOut(window.firebaseAuth.auth); // Cerrar sesión para forzar la validación
                 
                 alert("¡Cuenta creada exitosamente!\n\nTe hemos enviado un correo de confirmación. Por favor revisa tu bandeja de entrada (y la carpeta de spam) para verificar tu cuenta antes de iniciar sesión.");
@@ -340,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error.code === 'auth/weak-password') errorMsg = "La contraseña es muy débil. Usa al menos 6 caracteres.";
             alert(errorMsg);
         } finally {
-            btnSubmit.innerText = originalText;
+            btnSubmit.innerText = isRegisterMode ? "Registrarse" : "Iniciar Sesión";
             btnSubmit.disabled = false;
         }
     });
