@@ -127,12 +127,36 @@ document.addEventListener('DOMContentLoaded', () => {
                         const userData = userDoc.data();
                         const now = Date.now();
                         
+                        const btnUpgradeEarly = document.getElementById('btn-upgrade-early');
+                        
                         if (now > userData.trialEndsAt && userData.subscriptionStatus !== 'active') {
                             // Trial expirado y no tiene suscripción activa
+                            if(btnUpgradeEarly) btnUpgradeEarly.style.display = 'none';
+                            
+                            document.getElementById('subscription-title').innerText = "Tu periodo de prueba ha expirado";
+                            document.getElementById('subscription-subtitle').innerText = "Esperamos que hayas disfrutado estos 7 días con NutriPaws. Para seguir teniendo acceso al panel médico y mantenerte al día con la agenda de tu peludo, necesitas una suscripción activa.";
+                            document.getElementById('btn-back-dashboard-sub').style.display = 'none';
+                            
                             showView(document.getElementById('view-subscription'));
                             renderPayPalButtons();
                         } else {
                             // Trial activo o suscripción pagada
+                            if (userData.subscriptionStatus === 'active') {
+                                if(btnUpgradeEarly) btnUpgradeEarly.style.display = 'none';
+                            } else {
+                                if(btnUpgradeEarly) {
+                                    btnUpgradeEarly.style.display = 'block';
+                                    btnUpgradeEarly.onclick = () => {
+                                        document.getElementById('subscription-title').innerText = "¡Hazte Premium Hoy!";
+                                        document.getElementById('subscription-subtitle').innerText = "Adelántate y asegura el acceso ininterrumpido a todas las funciones premium para el cuidado de tu mascota.";
+                                        document.getElementById('btn-back-dashboard-sub').style.display = 'block';
+                                        
+                                        showView(document.getElementById('view-subscription'));
+                                        renderPayPalButtons();
+                                    };
+                                }
+                            }
+                            
                             showView(viewDashboard);
                             await loadPetsFromFirestore();
                         }
@@ -2328,6 +2352,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // LÓGICA DE SUSCRIPCIONES Y PAYPAL
     // =========================================================================
     
+    document.getElementById('btn-back-dashboard-sub').addEventListener('click', () => {
+        showView(viewDashboard);
+    });
+
     document.getElementById('btn-logout-subscription').addEventListener('click', async () => {
         if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
             await window.firebaseAuth.signOut(window.firebaseAuth.auth);
