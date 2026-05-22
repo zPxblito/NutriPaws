@@ -320,7 +320,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     handleCodeInApp: false
                 };
                 
-                await window.firebaseAuth.sendEmailVerification(result.user, actionCodeSettings);
+                try {
+                    await window.firebaseAuth.sendEmailVerification(result.user, actionCodeSettings);
+                } catch (e) {
+                    console.error("No se pudo enviar el correo con actionCodeSettings:", e);
+                    // Si falla por dominio no autorizado, enviar sin settings (caerá en fallback default)
+                    await window.firebaseAuth.sendEmailVerification(result.user);
+                }
+                
                 await window.firebaseAuth.signOut(window.firebaseAuth.auth); // Cerrar sesión para forzar la validación
                 
                 alert("¡Cuenta creada exitosamente!\n\nTe hemos enviado un correo de confirmación. Por favor revisa tu bandeja de entrada (y la carpeta de spam) para verificar tu cuenta antes de iniciar sesión.");
@@ -344,13 +351,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         alert(`Tu correo electrónico aún no ha sido verificado.\n\nDebes esperar ${remaining} segundos antes de poder solicitar otro correo de verificación.`);
                     } else {
                         if (confirm("Tu correo electrónico aún no ha sido verificado.\n\n¿Deseas que te enviemos un NUEVO enlace de verificación a tu correo?")) {
-                            const actionCodeSettings = {
-                                url: window.location.origin,
-                                handleCodeInApp: false
-                            };
-                            await window.firebaseAuth.sendEmailVerification(result.user, actionCodeSettings);
-                            localStorage.setItem('lastVerificationSent_' + result.user.uid, now.toString());
-                            alert("¡Nuevo correo enviado! Por favor revisa tu bandeja de entrada o tu carpeta de spam.");
+                            try {
+                                const actionCodeSettings = {
+                                    url: window.location.origin,
+                                    handleCodeInApp: false
+                                };
+                                await window.firebaseAuth.sendEmailVerification(result.user, actionCodeSettings);
+                                localStorage.setItem('lastVerificationSent_' + result.user.uid, now.toString());
+                                alert("¡Nuevo correo enviado! Por favor revisa tu bandeja de entrada o tu carpeta de spam.");
+                            } catch (e) {
+                                console.error("Error al reenviar correo con settings:", e);
+                                if (e.code === 'auth/too-many-requests') {
+                                    alert("Has solicitado demasiados correos de verificación. Por seguridad, Firebase ha bloqueado temporalmente los envíos a esta cuenta. Por favor, intenta de nuevo más tarde.");
+                                } else {
+                                    try {
+                                        // Fallback sin actionCodeSettings
+                                        await window.firebaseAuth.sendEmailVerification(result.user);
+                                        localStorage.setItem('lastVerificationSent_' + result.user.uid, now.toString());
+                                        alert("¡Nuevo correo enviado (modo seguro)! Por favor revisa tu bandeja de entrada o spam.");
+                                    } catch (fallbackErr) {
+                                        console.error("Error crítico de auth:", fallbackErr);
+                                        alert("Hubo un error interno de Firebase al intentar enviar el correo: " + fallbackErr.message);
+                                    }
+                                }
+                            }
                         }
                     }
                     
