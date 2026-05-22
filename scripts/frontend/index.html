@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriPaws | Calculadora BARF</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="theme-toggle">
+        <button id="theme-btn">🌙 Modo Oscuro</button>
+    </div>
+    
+    <header>
+        <div class="logo">
+            <span class="logo-nutri">Nutri</span><span class="logo-paws">Paws</span>
+        </div>
+        <p class="subtitle">Calculadora Inteligente de Nutrición BARF</p>
+    </header>
+
+    <main class="container">
+        <div class="card" id="calculator-card">
+            <form id="barf-form">
+                
+                <div class="step" id="step-1">
+                    <h2>1. Especie de tu mascota</h2>
+                    <div class="options-grid">
+                        <label class="radio-card">
+                            <input type="radio" name="especie" value="perro" required>
+                            <span class="card-content">🐶 Perro</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="especie" value="gato">
+                            <span class="card-content">🐱 Gato</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="step" id="step-2" style="display:none;">
+                    <h2>2. Selección de Raza</h2>
+                    <div class="form-group">
+                        <select name="raza" id="raza-select" required>
+                            <option value="">Selecciona la raza...</option>
+                        </select>
+                        <small>La raza es un factor crítico para su alimentación.</small>
+                    </div>
+                </div>
+
+                <div class="step" id="step-3" style="display:none;">
+                    <h2>3. Datos Físicos</h2>
+                    
+                    <div class="form-group">
+                        <label>Etapa de Vida</label>
+                        <select name="edad" id="edad-select" required>
+                            <option value="">Selecciona etapa...</option>
+                            <option value="adulto">Adulto</option>
+                            <option value="cachorro">Cachorro / Gatito</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Peso (kg)</label>
+                        <input type="number" name="peso" step="0.1" min="0.5" placeholder="Ej. 15.5" required>
+                    </div>
+
+                    <div class="form-group" id="actividad-group">
+                        <label>Nivel de Actividad (Solo adultos)</label>
+                        <select name="actividad" id="actividad-select">
+                            <option value="normal">Normal (Mantenimiento)</option>
+                            <option value="bajo">Bajo (Bajar de peso / Inactivo)</option>
+                            <option value="alto">Alto (Subir de peso / Muy activo)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="submit-btn" style="display:none;">Calcular Dieta Óptima</button>
+            </form>
+        </div>
+
+        <div class="card result-card" id="result-card" style="display:none;">
+            <h2>Resultados de la Dieta BARF</h2>
+            <div class="total-weight">
+                <span>Ración Diaria Total:</span>
+                <strong id="racion-total">0g</strong>
+            </div>
+            
+            <ul id="ingredient-list" class="ingredients">
+                <!-- Injected via JS -->
+            </ul>
+            
+            <div class="warnings">
+                <p><strong>⚠️ Atención:</strong> NUNCA cocines los huesos carnosos. Deben darse crudos. Los cálculos son aproximaciones iniciales, consulta a un veterinario nutricionista.</p>
+                <p id="taurina-warning" style="display:none;"><strong>🐱 Gatos:</strong> Asegura incluir cortes ricos en Taurina (ej. corazón) en la porción de carne magra.</p>
+            </div>
+            
+            <button class="btn-secondary" onclick="location.reload()">Calcular Otra</button>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

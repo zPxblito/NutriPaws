@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriPaws | Asistente Integral</title>
+    <link rel="icon" type="image/png" href="assets/logo-fondo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* Ajustes extra para descompactar la UI */
+        .dashboard-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem; /* Más espacio */
+        }
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .view-section {
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="dashboard-avatar-upload" accept="image/*" style="display: none;">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    
+    <!-- Menú Desplegable (Totalmente Arriba a la Derecha) -->
+    <div class="user-menu" id="user-menu-container" style="display: none; position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1000;">
+        <button id="menu-trigger" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; width: 48px; height: 48px; color: white; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); transition: all 0.2s ease;" title="Menú">☰</button>
+        <div id="dropdown-menu" style="display: none; position: absolute; right: 0; top: 60px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.8rem; width: 220px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <button id="theme-btn-menu" style="width: 100%; text-align: left; background: transparent; border: none; color: white; padding: 0.8rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1rem; border-radius: 6px; transition: background 0.2s;">☀️ Cambiar Tema</button>
+            <button style="width: 100%; text-align: left; background: transparent; border: none; color: var(--text-muted); padding: 0.8rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1rem; border-radius: 6px; transition: background 0.2s;">🎧 Soporte</button>
+            <button id="btn-logout" style="width: 100%; text-align: left; background: transparent; border: none; color: #ff6b6b; padding: 0.8rem; cursor: pointer; font-size: 1rem; border-radius: 6px; transition: background 0.2s;">Cerrar Sesión</button>
+        </div>
+    </div>
+    
+    <header style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 3rem; margin-bottom: 1rem;">
+        <div class="logo" style="text-align: center;">
+            <img src="assets/logo-transparente.png" alt="NutriPaws Logo" style="height: 220px; max-width: 90vw; object-fit: contain; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5)); transition: transform 0.3s ease;">
+        </div>
+        <p class="subtitle" id="header-subtitle" style="margin-top: 1rem; font-size: 1.2rem; font-weight: 500; color: rgba(255,255,255,0.9); letter-spacing: 1px;">Tu Asistente Médico y Nutricional</p>
+    </header>
+
+    <!-- ================= VISTA 1: LOGIN ================= -->
+    <main class="container view-section" id="view-login" style="max-width: 500px;">
+        <div class="card" style="text-align: center; padding: 3rem 2rem;">
+            <h2 style="margin-bottom: 1rem; font-size: 1.8rem;">Bienvenido a NutriPaws</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2.5rem; font-size: 1.1rem;">Inicia sesión para gestionar el perfil de tu mascota</p>
+            <div id="login-container">
+                <button id="btn-login-google" style="width: 100%; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; border: none; background: white; color: #333; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s;">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 24px;" alt="Google">
+                    Continuar con Google
+                </button>
+                <button id="btn-login-apple" style="width: 100%; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px; border: none; background: black; color: white; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" style="width: 20px; filter: invert(1);" alt="Apple">
+                    Continuar con Apple
+                </button>
+                
+                <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+                    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                    <span style="padding: 0 1rem; color: var(--text-muted); font-size: 0.9rem;">O usa tu correo</span>
+                    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                </div>
+
+                <form id="login-form">
+                    <div class="form-group" style="text-align: left; margin-bottom: 1.5rem;">
+                        <label style="font-size: 1rem;">Correo Electrónico</label>
+                        <input type="email" id="login-email" placeholder="ejemplo@correo.com" required style="padding: 1rem; font-size: 1rem;">
+                    </div>
+                    <div class="form-group" style="text-align: left; margin-bottom: 2rem;">
+                        <label style="font-size: 1rem;">Contraseña</label>
+                        <input type="password" id="login-password" placeholder="••••••••" required style="padding: 1rem; font-size: 1rem;">
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Iniciar Sesión</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= VISTA 2: DASHBOARD ================= -->
+    <main class="container view-section" id="view-dashboard" style="display: none; max-width: 1000px; width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2 style="font-size: 2rem;">Hola, <span id="user-name-display">Usuario</span> <button id="edit-name-btn" style="background:none; border:none; color: var(--text-muted); cursor:pointer; font-size: 1.2rem; transition: transform 0.2s;" title="Editar nombre">✏️</button> 👋</h2>
+            <button class="btn-primary" id="btn-goto-create-pet" style="padding: 0.8rem 1.5rem; font-size: 1rem; border-radius: 12px; transition: transform 0.2s;">+ Añadir Mascota</button>
+        </div>
+
+        <!-- Contenedor Dinámico de Mascotas -->
+        <div id="pets-list-container" style="margin-bottom: 3rem; display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="text-align: center; padding: 3rem; background: rgba(15, 23, 42, 0.4); border-radius: 20px; border: 2px dashed rgba(255,255,255,0.1);">
+                <p style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1rem;">No tienes mascotas registradas aún.</p>
+                <p style="color: var(--text-muted); font-size: 1rem;">Añade tu primer peludo para comenzar.</p>
+            </div>
+        </div>
+
+        <!-- Módulo: Registros Médicos y Calendario -->
+        <div class="dashboard-grid" style="margin-bottom: 2.5rem;">
+            <!-- Columna 1: Subida de Registros -->
+            <div class="card" style="padding: 2rem;">
+                <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem;">🏥 Registro Médico</h3>
+                <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
+                    Escribe notas o sube un PDF. La IA de NutriPaws lo analizará y agendará tus próximos cuidados.
+                </p>
+                <form id="medical-form">
+                    <textarea id="medical-notes" placeholder="Ej: Hoy le tocaba la Séxtuple pero el doc dijo que volvamos en 5 días..." style="width: 100%; height: 120px; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-family: inherit; margin-bottom: 1.5rem; resize: none; font-size: 1rem;"></textarea>
+                    
+                    <div style="border: 2px dashed rgba(255,255,255,0.2); padding: 1.5rem; text-align: center; border-radius: 12px; margin-bottom: 1.5rem; cursor: pointer; background: rgba(255,255,255,0.02); transition: background 0.3s;">
+                        📄 Subir PDF o Foto del Registro
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" style="padding: 1rem; font-size: 1.1rem; width: 100%;">Analizar y Guardar</button>
+                </form>
+            </div>
+
+            <!-- Columna 2: Calendario -->
+            <div class="card" style="padding: 2rem;">
+                <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem;">📅 Próximos Eventos</h3>
+                <div id="calendar-events" style="margin-top: 1rem;">
+                    <p style="color: var(--text-muted); font-size: 1rem; text-align: center; padding: 3rem 0; font-style: italic;">No hay citas o vacunas programadas aún.</p>
+                </div>
+                <button id="btn-cron" class="btn-secondary" style="width: 100%; margin-top: 2rem; font-size: 0.9rem; border: none; background: rgba(255,255,255,0.05); padding: 0.8rem;">[Dev] Simular Notificaciones Cron</button>
+            </div>
+        </div>
+
+        <!-- Módulo: AI-SkinGuard -->
+        <div class="card" style="margin-bottom: 2.5rem; padding: 2.5rem; border: 1px solid rgba(16, 185, 129, 0.3); background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(6, 78, 59, 0.4));">
+            <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: #34d399; display: flex; align-items: center; gap: 0.5rem;">
+                Análisis de Piel
+            </h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px;">
+                ¿Tu peludo tiene un sarpullido, costra o zona sin pelo? Sube una foto y nuestra IA dermatológica te dará una evaluación instantánea.
+            </p>
+            
+            <div id="skinguard-upload-area" style="border: 2px dashed rgba(52, 211, 153, 0.4); border-radius: 12px; padding: 2rem; text-align: center; background: rgba(0,0,0,0.2); cursor: pointer; transition: all 0.3s; margin-bottom: 1.5rem; position: relative; overflow: hidden;">
+                <input type="file" id="skinguard-input" accept="image/*" capture="camera" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                <div id="skinguard-upload-content">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📷</div>
+                    <p style="font-size: 1.1rem; font-weight: bold; color: var(--text-main);">Toca para abrir la cámara o subir foto</p>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">Formatos soportados: JPG, PNG</p>
+                </div>
+                <div id="skinguard-loading" style="display: none; align-items: center; justify-content: center; flex-direction: column;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid rgba(52, 211, 153, 0.1); border-top-color: #34d399; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+                    <p style="color: #34d399; font-weight: bold;">Analizando con Gemini Vision...</p>
+                </div>
+            </div>
+
+            <div id="skinguard-results" style="display: none; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
+                <h4 style="color: #34d399; margin-bottom: 0.5rem; font-size: 1.2rem;">Resultado del Análisis</h4>
+                <p><strong>Diagnóstico Presuntivo:</strong> <span id="sg-res-diag"></span></p>
+                <p><strong>Probabilidad:</strong> <span id="sg-res-prob"></span></p>
+                <p><strong>Urgencia:</strong> <span id="sg-res-urg" style="font-weight: bold;"></span></p>
+                <div style="margin-top: 1rem;">
+                    <strong>Explicación Médica:</strong>
+                    <p id="sg-res-exp" style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.95rem;"></p>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <strong>Recomendaciones / Primeros Auxilios:</strong>
+                    <ul id="sg-res-aid" style="margin-top: 0.5rem; margin-left: 1.5rem; color: var(--text-muted); font-size: 0.95rem;"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Módulo: Calculadora Rápida -->
+        <div class="card" style="padding: 2.5rem; text-align: center; border: 1px solid rgba(139, 92, 246, 0.3); background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 27, 75, 0.8));">
+            <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: #a78bfa;">Calculadora Rápida</h3>
+            <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1.1rem;">¿Quieres calcular una dieta para una mascota que no es tuya?</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button class="btn-secondary" id="btn-quick-calc" style="padding: 1rem 2rem; font-size: 1.1rem; border: 1px solid #8b5cf6; background: rgba(139, 92, 246, 0.1); color: #c4b5fd;">Usar Calculadora Rápida</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= VISTA 2.5: CREAR PERFIL ================= -->
+    <main class="container view-section" id="view-create-pet" style="display: none; max-width: 600px;">
+        <button id="btn-back-from-create" class="btn-secondary" style="margin-bottom: 1.5rem; border: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.5rem; font-size: 1rem; background: rgba(255,255,255,0.1);">
+            <span>◀ Cancelar</span>
+        </button>
+
+        <div class="card" style="padding: 2.5rem;">
+            <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem; text-align: center;">Nuevo Miembro de la Familia</h2>
+            <p style="color: var(--text-muted); text-align: center; margin-bottom: 2rem;">Ingresa los datos principales de tu mascota</p>
+
+            <form id="create-pet-form">
+                <!-- Avatar Upload (Aislado aquí) -->
+                <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
+                    <label for="pet-avatar-upload" style="cursor: pointer; display: block; position: relative;" title="Subir foto de la mascota">
+                        <img id="pet-avatar-img" src="" style="display: none; width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.2);">
+                        <div id="pet-avatar-placeholder" style="width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 2px dashed rgba(255,255,255,0.3); transition: background 0.3s;">
+                            📷
+                        </div>
+                    </label>
+                    <input type="file" id="pet-avatar-upload" accept="image/*" style="display: none;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-size: 1.1rem;">¿Cómo se llama?</label>
+                    <input type="text" id="create-pet-name" placeholder="Ej: Max, Luna..." required style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: white; font-size: 1.1rem;">
+                </div>
+
+                <div class="options-grid" style="margin-bottom: 1.5rem;">
+                    <label class="radio-card">
+                        <input type="radio" name="create_especie" value="perro" required>
+                        <span class="card-content" style="font-size: 1.1rem; padding: 1rem;">🐶 Perro</span>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="create_especie" value="gato">
+                        <span class="card-content" style="font-size: 1.1rem; padding: 1rem;">🐱 Gato</span>
+                    </label>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-size: 1.1rem;">Raza</label>
+                    <select id="create-pet-raza" required style="padding: 1rem; font-size: 1.1rem;">
+                        <option value="">Selecciona primero la especie...</option>
+                    </select>
+                </div>
+
+                <div class="age-group" style="margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label style="font-size: 1.1rem;">Años</label>
+                        <input type="number" id="create-pet-anos" step="0.1" min="0" max="30" placeholder="0" style="padding: 1rem; font-size: 1.1rem;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 1.1rem;">Meses</label>
+                        <input type="number" id="create-pet-meses" step="0.1" min="0" placeholder="0" style="padding: 1rem; font-size: 1.1rem;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label style="font-size: 1.1rem;">Personalidad (Opcional) 💖</label>
+                    <select id="create-pet-personalidad" style="padding: 1rem; font-size: 1.1rem;">
+                        <option value="">No especificar</option>
+                        <option value="jugueton">Muy juguetón / Activo</option>
+                        <option value="dormilon">Dormilón / Tranquilo</option>
+                        <option value="timido">Tímido / Reservado</option>
+                        <option value="guardian">Guardián protector</option>
+                        <option value="mimoso">Súper mimoso</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary" style="padding: 1.2rem; font-size: 1.2rem; width: 100%; border-radius: 12px;">Guardar Perfil</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- ================= VISTA 3: CALCULADORA ================= -->
+    <main class="container view-section" id="view-calculator" style="display: none; max-width: 800px;">
+        <button id="btn-close-calculator" class="btn-secondary" style="margin-bottom: 1.5rem; border: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.5rem; font-size: 1.1rem; background: rgba(255,255,255,0.1);">
+            <span>◀ Volver al Dashboard</span>
+        </button>
+
+        <div class="card" id="calculator-card" style="padding: 2.5rem;">
+            <form id="barf-form">
+                
+                <div id="calc-guest-fields" style="display: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2rem; margin-bottom: 2rem;">
+                    <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: #a78bfa;">Datos Base del Paciente (No Guardado)</h2>
+                    <div class="options-grid" style="margin-bottom: 1.5rem;">
+                        <label class="radio-card">
+                            <input type="radio" name="guest_especie" value="perro">
+                            <span class="card-content" style="font-size: 1.1rem; padding: 1rem;">🐶 Perro</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="guest_especie" value="gato">
+                            <span class="card-content" style="font-size: 1.1rem; padding: 1rem;">🐱 Gato</span>
+                        </label>
+                    </div>
+                    <div class="age-group">
+                        <div class="form-group">
+                            <label style="font-size: 1.1rem;">Años</label>
+                            <input type="number" name="guest_anos" id="guest_anos" step="0.1" min="0" max="30" placeholder="0" style="padding: 1rem; font-size: 1.1rem;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 1.1rem;">Meses</label>
+                            <input type="number" name="guest_meses" id="guest_meses" step="0.1" min="0" placeholder="0" style="padding: 1rem; font-size: 1.1rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step" id="step-1" style="display: none;">
+                    <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem;"><span class="step-num">1</span> Datos Físicos Actuales</h2>
+                    
+                    <p style="color: var(--brand-green); margin-bottom: 1.5rem; font-size: 1.1rem;" id="calc-phys-desc">Ingresa el peso y nivel de actividad actual de tu mascota para calcular su dieta exacta hoy.</p>
+
+
+                    
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="font-size: 1.1rem;">Peso Corporal</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" name="peso" step="0.1" min="0.5" placeholder="Ej. 15.5" required style="flex: 1; padding: 1rem; font-size: 1.1rem;">
+                            <select name="unidad_peso" style="width: 90px; padding-left: 0.5rem; padding-right: 0.5rem; font-size: 1.1rem;">
+                                <option value="kg">kg</option>
+                                <option value="lbs">lbs</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="actividad-group">
+                        <label style="font-size: 1.1rem;">Nivel de Actividad</label>
+                        <select name="actividad" id="actividad-select" style="padding: 1rem; font-size: 1.1rem;">
+                            <option value="mantenimiento">Actividad Media / Mantenimiento</option>
+                            <option value="sedentario">Sedentario / Pérdida de Peso</option>
+                            <option value="alto">Alta Actividad / Ganancia de Peso</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="submit-btn" style="padding: 1.2rem; font-size: 1.2rem; margin-top: 2rem; width: 100%;">Generar Plan Nutricional</button>
+            </form>
+        </div>
+
+        <div class="result-container" id="result-container" style="display:none; margin-top: 2rem;">
+            <div class="summary-card card" style="padding: 2.5rem;">
+                <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem;">Plan Nutricional</h2>
+                
+                <div class="summary-stats-grid">
+                    <div class="stat-box main-stat">
+                        <div class="label">Ración Diaria Total</div>
+                        <div class="value" id="racion-total">0g</div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;" id="racion-calorias">0 kcal</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="label">Comidas al Día</div>
+                        <div class="value" id="racion-comidas" style="font-size: 1.8rem; color: white;">2</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="label">Porción por Comida</div>
+                        <div class="value" id="racion-recomendacion" style="font-size: 1.8rem; color: white;">0g</div>
+                    </div>
+                </div>
+
+                <button class="btn-secondary" id="btn-recalculate" style="margin-top: 2rem; background: white; color: var(--brand-blue); border: none; padding: 1rem 1.5rem; font-size: 1.1rem;">Recalcular Dieta</button>
+            </div>
+
+            <div class="ingredients-grid" id="ingredient-list">
+                <!-- Injected via JS -->
+            </div>
+            
+            <div class="warnings" style="margin-top: 2rem; font-size: 1rem;">
+                <p><strong>⚠️ Atención:</strong> Los huesos carnosos <strong>NUNCA</strong> deben cocinarse (se astillan y son peligrosos). Estos cálculos son una base inicial recomendada.</p>
+                <p id="taurina-warning" style="display:none;"><strong>🐱 Extra Gatos:</strong> Es vital incluir cortes ricos en Taurina (como el corazón) dentro de la porción de carne magra.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= VISTA 4: AGENDA Y CALENDARIO ================= -->
+    <main class="container view-section" id="view-calendar" style="display: none; max-width: 800px; width: 100%;">
+        <button id="btn-close-calendar" class="btn-secondary" style="margin-bottom: 2rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white;">
+            <span>◀ Volver al Dashboard</span>
+        </button>
+
+        <div class="card" style="padding: 2.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.8rem; color: var(--brand-green);">Agenda de <span id="calendar-pet-name">Mascota</span></h2>
+                <div style="display: flex; align-items: center; gap: 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 0.5rem;">
+                    <button id="btn-prev-month" style="background:none; border:none; color:white; font-size: 1.5rem; cursor:pointer; padding: 0 0.5rem;">◀</button>
+                    <span id="calendar-month-year" style="font-size: 1.2rem; font-weight: 600; min-width: 120px; text-align: center;">Mayo 2026</span>
+                    <button id="btn-next-month" style="background:none; border:none; color:white; font-size: 1.5rem; cursor:pointer; padding: 0 0.5rem;">▶</button>
+                </div>
+            </div>
+
+            <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center;">
+                <!-- Días de la semana -->
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Lun</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Mar</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Mié</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Jue</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Vie</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Sáb</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Dom</div>
+                
+                <!-- Días inyectados por JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para Añadir/Ver Evento -->
+    <div id="event-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 10000; align-items:center; justify-content:center;">
+        <div class="card" style="width: 90%; max-width: 400px; padding: 2rem; transform: scale(0.9); opacity: 0; transition: transform 0.3s, opacity 0.3s;" id="event-modal-content">
+            <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;" id="event-modal-date-title">15 de Mayo</h3>
+            <div id="event-modal-existing" style="margin-bottom: 1.5rem; color: var(--brand-green); font-size: 1.1rem; font-weight: bold; display: none;">
+                <!-- Evento existente -->
+            </div>
+            
+            <form id="add-event-form">
+                <div class="form-group">
+                    <label>Añadir Nuevo Evento</label>
+                    <input type="text" id="new-event-title" placeholder="Ej: Vacuna, Paseo al parque..." required style="padding: 1rem; font-size: 1rem; width: 100%;">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn-secondary" id="btn-close-modal" style="flex: 1; padding: 0.8rem; font-size: 1rem; background: rgba(255,255,255,0.1); border: none;">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="flex: 1; padding: 0.8rem; font-size: 1rem;">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= FOOTER GLOBAL ================= -->
+    <footer id="main-footer" style="display: none; background-color: var(--bg-color); width: calc(100% + 2rem); margin: 4rem -1rem -2rem -1rem; padding: 4rem 2rem; border-top: 1px solid var(--border-color); flex-direction: column; align-items: center; z-index: 10; position: relative;">
+        <div style="max-width: 800px; text-align: center;">
+            <h4 style="font-size: 2.2rem; color: var(--brand-green); margin-bottom: 1.5rem; font-weight: 800; letter-spacing: -1px;">NutriPaws</h4>
+            
+            <p style="color: var(--text-main); margin-bottom: 2.5rem; font-size: 1.1rem; line-height: 1.6; max-width: 600px; margin-left: auto; margin-right: auto; opacity: 0.9;">
+                Nos importa la salud de tu peludo. NutriPaws está creado por un equipo apasionado que ama a los animales, y nuestra misión es darte las mejores herramientas para que cuides a tu amado compañero.
+            </p>
+            
+            <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 3rem; flex-wrap: wrap;">
+                <a href="#" style="color: var(--brand-green); font-size: 1rem; text-decoration: none; font-weight: bold; border: 2px solid var(--brand-green); padding: 0.5rem 1rem; border-radius: 8px;">Instagram</a>
+                <a href="#" style="color: var(--brand-green); font-size: 1rem; text-decoration: none; font-weight: bold; border: 2px solid var(--brand-green); padding: 0.5rem 1rem; border-radius: 8px;">Twitter / X</a>
+                <a href="#" style="color: var(--brand-green); font-size: 1rem; text-decoration: none; font-weight: bold; border: 2px solid var(--brand-green); padding: 0.5rem 1rem; border-radius: 8px;">Facebook</a>
+            </div>
+            
+            <p style="color: var(--text-muted); font-size: 0.9rem;">&copy; 2025-2026 NutriPaws. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="firebase-auth.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
