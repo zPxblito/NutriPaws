@@ -1317,6 +1317,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Si el navegador restauró la selección tras recargar, forzar el disparo del evento
+    const selectedEspecie = document.querySelector('input[name="create_especie"]:checked');
+    if (selectedEspecie) {
+        selectedEspecie.dispatchEvent(new Event('change'));
+    }
+
     // Guardar Perfil (Create Pet)
     document.getElementById('create-pet-form').addEventListener('submit', (e) => {
         e.preventDefault();
