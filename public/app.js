@@ -329,8 +329,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 result = await window.firebaseAuth.signInWithEmailAndPassword(window.firebaseAuth.auth, email, password);
                 
                 if (!result.user.emailVerified) {
+                    const lastSentStr = localStorage.getItem('lastVerificationSent_' + result.user.uid);
+                    const lastSent = lastSentStr ? parseInt(lastSentStr) : 0;
+                    const now = Date.now();
+                    const cooldown = 60000; // 60 segundos
+                    
+                    if (now - lastSent < cooldown) {
+                        const remaining = Math.ceil((cooldown - (now - lastSent)) / 1000);
+                        alert(`Tu correo electrónico aún no ha sido verificado.\n\nDebes esperar ${remaining} segundos antes de poder solicitar otro correo de verificación.`);
+                    } else {
+                        if (confirm("Tu correo electrónico aún no ha sido verificado.\n\n¿Deseas que te enviemos un NUEVO enlace de verificación a tu correo?")) {
+                            const actionCodeSettings = {
+                                url: window.location.origin,
+                                handleCodeInApp: false
+                            };
+                            await window.firebaseAuth.sendEmailVerification(result.user, actionCodeSettings);
+                            localStorage.setItem('lastVerificationSent_' + result.user.uid, now.toString());
+                            alert("¡Nuevo correo enviado! Por favor revisa tu bandeja de entrada o tu carpeta de spam.");
+                        }
+                    }
+                    
                     await window.firebaseAuth.signOut(window.firebaseAuth.auth);
-                    return alert("Tu correo electrónico aún no ha sido verificado. Por favor revisa tu bandeja de entrada o carpeta de spam para verificarlo.");
+                    return;
                 }
             }
             
