@@ -306,11 +306,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                const src = event.target.result;
-                document.getElementById('pet-avatar-img').src = src;
-                document.getElementById('pet-avatar-img').style.display = 'block';
-                document.getElementById('pet-avatar-placeholder').style.display = 'none';
-                tempAvatarSrc = src;
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 300;
+                    const MAX_HEIGHT = 300;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Comprimir calidad al 70%
+
+                    document.getElementById('pet-avatar-img').src = dataUrl;
+                    document.getElementById('pet-avatar-img').style.display = 'block';
+                    document.getElementById('pet-avatar-placeholder').style.display = 'none';
+                    tempAvatarSrc = dataUrl;
+                };
+                img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -2210,6 +2238,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ingredientsHTML: list.innerHTML
             };
 
+            await savePetToFirestore(currentPet);
+
             renderPets();
             document.getElementById('btn-close-calculator').innerHTML = `<span>◀ Volver al Perfil de ${currentPet.name}</span>`;
         } else {
@@ -2479,7 +2509,7 @@ window.generatePDFReport = function(pet) {
     const ageY = bDateStr ? new Date().getFullYear() - bDateStr.getFullYear() : '--';
     
     // Generar la receta purista directamente calculándola, sin leer HTML sucio del pasado
-    const dogRatios = [
+    const dogRatiosBARF = [
         { name: 'Carne Magra', pct: 0.70 },
         { name: 'Hueso Carnoso', pct: 0.10 },
         { name: 'Hígado', pct: 0.05 },
@@ -2487,14 +2517,23 @@ window.generatePDFReport = function(pet) {
         { name: 'Verduras/Frutas', pct: 0.10, isOptional: true }
     ];
 
-    const catRatios = [
+    const catRatiosBARF = [
         { name: 'Carne Magra', pct: 0.80 },
         { name: 'Hueso Carnoso', pct: 0.10 },
         { name: 'Hígado', pct: 0.05 },
         { name: 'Otros órganos', pct: 0.05 }
     ];
     
-    const ratios = pet.especie === 'perro' ? dogRatios : catRatios;
+    let ratios = [];
+    if (pet.tipoDieta === 'mixta') {
+        ratios = [
+            {name: pet.especie === 'perro' ? "Croquetas / Perrarina" : "Gatarina / Croquetas", pct: 0.80},
+            {name: "Carne Magra Fresca", pct: 0.20}
+        ];
+    } else {
+        ratios = pet.especie === 'perro' ? dogRatiosBARF : catRatiosBARF;
+    }
+
     const racionTotalGramos = parseInt(pet.lastDieta.racionTotal) || 0;
     
     let listaLimpiaHTML = `<table style="width: 100%; border-collapse: collapse; font-size: 16px; color: #000;">`;
