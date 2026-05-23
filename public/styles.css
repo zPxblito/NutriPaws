@@ -283,6 +283,31 @@ body.cursor-hover .cursor-trail-dot {
 }
 [data-theme="dark"] .btn-secondary { color: white; }
 
+.btn-emergency {
+    position: fixed;
+    top: 1.5rem;
+    left: 1.5rem;
+    z-index: 9999;
+    background: #ef4444;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    transition: transform 0.2s, background-color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-emergency:hover {
+    transform: translateY(-2px);
+    background: #dc2626;
+}
+
 .result-container {
     display: flex;
     flex-direction: column;
@@ -442,5 +467,18 @@ body.cursor-hover .cursor-trail-dot {
     }
     .step h2 {
         font-size: 1.2rem;
+    }
+    .btn-emergency {
+        top: auto;
+        bottom: 1.5rem;
+        left: 1.5rem;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        padding: 0;
+        justify-content: center;
+    }
+    .emergency-text {
+        display: none;
     }
 }
