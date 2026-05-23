@@ -28,6 +28,33 @@ document.addEventListener('DOMContentLoaded', () => {
             querySnapshot.forEach((doc) => {
                 pets.push(doc.data());
             });
+            
+            // --- INICIO MIGRACION LOCALSTORAGE ---
+            const localKeys = ['pets', 'nutripaws_pets', 'nutripaws_mascotas', 'saved_pets'];
+            let migrated = false;
+            for (let key of localKeys) {
+                const localPetsStr = localStorage.getItem(key);
+                if (localPetsStr) {
+                    try {
+                        const localPets = JSON.parse(localPetsStr);
+                        if (Array.isArray(localPets) && localPets.length > 0) {
+                            for (let p of localPets) {
+                                if (!p.id) p.id = Date.now() + Math.floor(Math.random() * 1000);
+                                pets.push(p);
+                                const petRef = window.firebaseAuth.doc(window.firebaseAuth.db, `users/${currentUser.uid}/pets`, p.id.toString());
+                                await window.firebaseAuth.setDoc(petRef, p);
+                            }
+                            migrated = true;
+                        }
+                        localStorage.removeItem(key);
+                    } catch(e) { console.error("Migracion local fallida:", e); }
+                }
+            }
+            if (migrated) {
+                console.log("Mascotas migradas desde localStorage a Firestore exitosamente.");
+            }
+            // --- FIN MIGRACION LOCALSTORAGE ---
+            
             if (pets.length > 0) activePetIndex = 0;
             else activePetIndex = -1;
             renderPets();
@@ -2934,10 +2961,62 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const btnSub = document.getElementById('btn-profile-sub');
     if(btnSub) {
-        btnSub.addEventListener('click', () => {
+        btnSub.addEventListener('click', async () => {
             document.getElementById('view-dashboard').style.display = 'none';
-            document.getElementById('bottom-nav').style.display = 'none';
+            if(document.getElementById('bottom-nav')) document.getElementById('bottom-nav').style.display = 'none';
             document.getElementById('view-subscription').style.display = 'flex';
+            
+            const titleEl = document.getElementById('subscription-title');
+            
+            const userActual = window.firebaseAuth && window.firebaseAuth.auth ? window.firebaseAuth.auth.currentUser : null;
+            if (userActual && window.firebaseAuth) {
+                try {
+                    const userDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, 'users', userActual.uid);
+                    const userDoc = await window.firebaseAuth.getDoc(userDocRef);
+                    if(userDoc.exists()) {
+                        const userData = userDoc.data();
+                        const now = Date.now();
+                        const subtitleEl = document.getElementById('subscription-subtitle');
+                        const backBtn = document.getElementById('btn-back-dashboard-sub');
+                        
+                        if (userData.subscriptionStatus !== 'active' && now <= userData.trialEndsAt) {
+                            const daysLeft = Math.ceil((userData.trialEndsAt - now) / (1000 * 60 * 60 * 24));
+                            if (titleEl) titleEl.innerText = "¡Suscripción UltraPaws!";
+                            if (subtitleEl) subtitleEl.innerText = "Te quedan " + daysLeft + " días de prueba gratuita. Adelántate y asegura tu acceso ininterrumpido a todas las funciones premium para el cuidado de tu mascota.";
+                            const btnShowPaypal = document.getElementById('btn-show-paypal');
+                            if (btnShowPaypal) btnShowPaypal.style.display = 'block';
+                        } else if (userData.subscriptionStatus === 'active') {
+                            if (titleEl) titleEl.innerText = "¡Suscripción Activa!";
+                            if (subtitleEl) subtitleEl.innerText = "Gracias por ser parte de la familia UltraPaws. Tienes acceso completo a todas las funciones premium.";
+                            const btnShowPaypal = document.getElementById('btn-show-paypal');
+                            if (btnShowPaypal) btnShowPaypal.style.display = 'none';
+                        }
+                        if (backBtn) {
+                            backBtn.innerText = "Volver al Dashboard";
+                            backBtn.style.display = 'block';
+                        }
+                    }
+                } catch(e) { console.error("Error perfil sub:", e); }
+            }
+            
+            const btnShowPaypal = document.getElementById('btn-show-paypal');
+            const paypalContainer = document.getElementById('paypal-button-container');
+            if (btnShowPaypal && paypalContainer && paypalContainer.style.display !== 'block') {
+                if (!titleEl || titleEl.innerText !== "¡Suscripción Activa!") {
+                    btnShowPaypal.style.display = 'block';
+                }
+                paypalContainer.style.display = 'none';
+            }
+        });
+    }
+
+    const globalBtnShowPaypal = document.getElementById('btn-show-paypal');
+    if (globalBtnShowPaypal) {
+        globalBtnShowPaypal.addEventListener('click', () => {
+            globalBtnShowPaypal.style.display = 'none';
+            const container = document.getElementById('paypal-button-container');
+            if (container) container.style.display = 'block';
+            if (typeof renderPayPalButtons === 'function') renderPayPalButtons();
         });
     }
 
