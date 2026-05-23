@@ -2549,6 +2549,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let paypalRendered = false;
     
+    window.renderPayPalButtons = renderPayPalButtons;
     function renderPayPalButtons() {
         if (paypalRendered) return;
         
@@ -3016,7 +3017,7 @@ window.addEventListener('DOMContentLoaded', () => {
             globalBtnShowPaypal.style.display = 'none';
             const container = document.getElementById('paypal-button-container');
             if (container) container.style.display = 'block';
-            if (typeof renderPayPalButtons === 'function') renderPayPalButtons();
+            if (typeof window.renderPayPalButtons === 'function') window.renderPayPalButtons();
         });
     }
 
