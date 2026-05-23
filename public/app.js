@@ -2407,12 +2407,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('event-modal-date-title').innerText = `${dateObj.getDate()} de ${monthNames[dateObj.getMonth()]}`;
         
         const existingDiv = document.getElementById('event-modal-existing');
+        const existingTextDiv = document.getElementById('event-modal-existing-text');
         const titleInput = document.getElementById('new-event-title');
         
         if (existingEvent) {
             const evTitle = existingEvent.event_type || existingEvent.title || 'Evento';
             const evDesc = existingEvent.description || '';
-            existingDiv.innerHTML = `📌 Toca hoy: <br><span style="color:white; font-size:1.3rem;">${evTitle}</span><br><span style="font-size: 0.9rem; color: var(--text-muted);">${evDesc}</span>`;
+            existingTextDiv.innerHTML = `📌 Toca hoy: <br><span style="color:white; font-size:1.3rem;">${evTitle}</span><br><span style="font-size: 0.9rem; color: var(--text-muted);">${evDesc}</span>`;
             existingDiv.style.display = 'block';
             titleInput.placeholder = "Reemplazar evento actual...";
             titleInput.value = "";
@@ -2442,7 +2443,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-close-modal').addEventListener('click', closeEventModal);
     
-    document.getElementById('add-event-form').addEventListener('submit', (e) => {
+    document.getElementById('btn-delete-event').addEventListener('click', async () => {
+        const currentPet = pets[activePetIndex];
+        currentPet.events = currentPet.events.filter(ev => {
+            const eDate = new Date(ev.date);
+            eDate.setHours(0,0,0,0);
+            return eDate.getTime() !== selectedDateForEvent.getTime();
+        });
+        await savePetToFirestore(currentPet);
+        renderCalendar();
+        closeEventModal();
+    });
+
+    document.getElementById('add-event-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const title = document.getElementById('new-event-title').value.trim();
         
@@ -2463,6 +2476,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 date: selectedDateForEvent.toISOString()
             });
             
+            await savePetToFirestore(currentPet);
             renderCalendar();
         }
         closeEventModal();
