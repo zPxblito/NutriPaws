@@ -48,6 +48,69 @@
             margin-top: 2rem;
         }
     </style>
+
+    <style>
+    /* Forzar barra inferior en PC para que no desaparezca la navegacion */
+    @media (min-width: 769px) {
+        .bottom-bar {
+            display: flex !important;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--bg-color);
+            border-top: 1px solid var(--border-color);
+            justify-content: center;
+            gap: 2rem;
+            padding: 1rem;
+            z-index: 9998;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+            width: 80px;
+            height: 70px;
+            justify-content: center;
+        }
+        .bottom-nav-item img {
+            width: 28px;
+            height: 28px;
+            opacity: 0.6;
+            transition: all 0.2s;
+            filter: invert(0);
+        }
+        [data-theme="dark"] .bottom-nav-item img {
+            filter: invert(1);
+        }
+        .bottom-nav-item.active {
+            background: var(--brand-green);
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(141, 198, 63, 0.3);
+        }
+        .bottom-nav-item.active img {
+            opacity: 1;
+            filter: invert(1);
+        }
+        .bottom-nav-item span {
+            font-size: 0.85rem;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+        main.container {
+            padding-bottom: 120px !important;
+        }
+    }
+    </style>
 </head>
 <body>
     <input type="file" id="dashboard-avatar-upload" accept="image/*" style="display: none;">
