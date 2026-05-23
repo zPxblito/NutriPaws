@@ -2571,3 +2571,162 @@ window.generatePDFReport = function(pet) {
         alert("Ocurrió un error nativo al generar el PDF.");
     });
 };
+
+// =========================================================================
+// NUEVAS FUNCIONES: CALCULADORA DE DOSIS Y EMERGENCIAS SOS
+// =========================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Calculadora de Dosificación
+    const doseSpecies = document.getElementById('dose-species');
+    const doseWeight = document.getElementById('dose-weight');
+    const doseMedication = document.getElementById('dose-medication');
+    const btnCalculateDose = document.getElementById('btn-calculate-dose');
+    const doseResultContainer = document.getElementById('dose-result-container');
+    const doseResultValue = document.getElementById('dose-result-value');
+    const doseResultMath = document.getElementById('dose-result-math');
+    const doseWarningText = document.getElementById('dose-warning-text');
+
+    const medsDatabase = {
+        perro: [
+            { id: 'meloxicam_dog', name: 'Meloxicam (Dolor/Inflamación)', dose_mg_kg: 0.1, formula_desc: '0.1 mg por cada kg de peso' },
+            { id: 'famotidina_dog', name: 'Famotidina (Acidez/Gástrico)', dose_mg_kg: 0.5, formula_desc: '0.5 mg por cada kg de peso' },
+            { id: 'carbon_dog', name: 'Carbón Activado (Intoxicación)', dose_mg_kg: 1.0, formula_desc: '1 a 2 g por cada kg de peso (Mostraré 1g/kg conservador)' },
+            { id: 'benadryl_dog', name: 'Difenhidramina / Benadryl (Alergias)', dose_mg_kg: 2.0, formula_desc: '2.0 mg por cada kg de peso' }
+        ],
+        gato: [
+            { id: 'meloxicam_cat', name: 'Meloxicam (Extremo Cuidado)', dose_mg_kg: 0.05, formula_desc: '0.05 mg por cada kg de peso (Solo 1 día)' },
+            { id: 'famotidina_cat', name: 'Famotidina (Acidez)', dose_mg_kg: 0.5, formula_desc: '0.5 mg por cada kg de peso' },
+            { id: 'carbon_cat', name: 'Carbón Activado (Intoxicación)', dose_mg_kg: 1.0, formula_desc: '1 g por cada kg de peso' }
+        ]
+    };
+
+    function updateMedDropdown() {
+        if (!doseSpecies || !doseMedication) return;
+        const species = doseSpecies.value;
+        doseMedication.innerHTML = '';
+        medsDatabase[species].forEach(med => {
+            const option = document.createElement('option');
+            option.value = med.id;
+            option.textContent = med.name;
+            doseMedication.appendChild(option);
+        });
+        
+        if (species === 'gato') {
+            doseWarningText.innerText = "¡CUIDADO! Muchos medicamentos humanos (como el paracetamol o ibuprofeno) son MORTALES para los gatos. Solo usa opciones listadas.";
+            doseWarningText.style.display = 'block';
+        } else {
+            doseWarningText.style.display = 'none';
+        }
+    }
+
+    if (doseSpecies) {
+        doseSpecies.addEventListener('change', updateMedDropdown);
+        updateMedDropdown(); // Init
+    }
+
+    if (btnCalculateDose) {
+        btnCalculateDose.addEventListener('click', () => {
+            const weight = parseFloat(doseWeight.value);
+            if (isNaN(weight) || weight <= 0) {
+                alert("Por favor ingresa un peso válido en Kg.");
+                return;
+            }
+            
+            const species = doseSpecies.value;
+            const medId = doseMedication.value;
+            const med = medsDatabase[species].find(m => m.id === medId);
+            
+            if (!med) return;
+            
+            const resultMg = (weight * med.dose_mg_kg).toFixed(1);
+            
+            doseResultValue.innerText = `${resultMg} mg`;
+            if (med.id.includes('carbon')) {
+                doseResultValue.innerText = `${(weight * 1).toFixed(1)} Gramos`;
+            }
+            
+            doseResultMath.innerText = `Cálculo: ${weight} kg x ${med.formula_desc} = ${doseResultValue.innerText}`;
+            doseResultContainer.style.display = 'block';
+        });
+    }
+
+    // 2. Modo Emergencia SOS
+    const btnSos = document.getElementById('btn-emergency-sos');
+    const modalSos = document.getElementById('modal-emergency-sos');
+    const btnCloseSos = document.getElementById('btn-close-emergency');
+    const optionBtns = document.querySelectorAll('.emergency-option-btn');
+    const btnOther = document.getElementById('btn-emergency-other');
+    const inputContainer = document.getElementById('emergency-input-container');
+    const customTextInput = document.getElementById('emergency-custom-text');
+    const btnSendCustom = document.getElementById('btn-send-custom-emergency');
+    const loadingSos = document.getElementById('emergency-loading');
+    const resultSos = document.getElementById('emergency-result');
+    const resultTextSos = document.getElementById('emergency-result-text');
+
+    if (btnSos) {
+        btnSos.addEventListener('click', () => {
+            modalSos.style.display = 'flex';
+            document.getElementById('emergency-options').style.display = 'flex';
+            inputContainer.style.display = 'none';
+            resultSos.style.display = 'none';
+            loadingSos.style.display = 'none';
+        });
+    }
+
+    if (btnCloseSos) {
+        btnCloseSos.addEventListener('click', () => {
+            modalSos.style.display = 'none';
+        });
+    }
+
+    async function sendEmergencyRequest(emergencyType) {
+        document.getElementById('emergency-options').style.display = 'none';
+        inputContainer.style.display = 'none';
+        resultSos.style.display = 'none';
+        loadingSos.style.display = 'block';
+        
+        try {
+            const response = await fetch('/api/emergency_sos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ emergency_type: emergencyType })
+            });
+            const data = await response.json();
+            
+            loadingSos.style.display = 'none';
+            resultSos.style.display = 'block';
+            
+            if (data.error) {
+                resultTextSos.innerHTML = `<span style="color:red">${data.error}</span>`;
+            } else {
+                resultTextSos.innerHTML = data.sos_steps.replace(/\n/g, '<br>');
+            }
+        } catch (error) {
+            loadingSos.style.display = 'none';
+            resultSos.style.display = 'block';
+            resultTextSos.innerHTML = '<span style="color:red">Fallo de conexión. ACUDE AL VETERINARIO INMEDIATAMENTE.</span>';
+        }
+    }
+
+    optionBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            sendEmergencyRequest(e.target.getAttribute('data-type'));
+        });
+    });
+
+    if (btnOther) {
+        btnOther.addEventListener('click', () => {
+            document.getElementById('emergency-options').style.display = 'none';
+            inputContainer.style.display = 'block';
+        });
+    }
+
+    if (btnSendCustom) {
+        btnSendCustom.addEventListener('click', () => {
+            const txt = customTextInput.value.trim();
+            if (txt) {
+                sendEmergencyRequest(txt);
+            }
+        });
+    }
+});

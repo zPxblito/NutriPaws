@@ -137,3 +137,30 @@ Las opciones para urgencia son: BAJA, MEDIA, ALTA."""
         return jsonify({
             "error": "En estos momentos el servicio de análisis se encuentra al máximo, intente de nuevo en un minuto."
         }), 503
+
+@app.route('/api/emergency_sos', methods=['POST'])
+def emergency_sos():
+    data = request.json
+    emergency_type = data.get('emergency_type', '')
+    
+    if not client:
+        return jsonify({"error": "API Key no configurada"}), 500
+
+    prompt = f"""Eres un médico de emergencias veterinarias. El usuario se enfrenta a la siguiente emergencia con su mascota: '{emergency_type}'.
+Proporciona ÚNICAMENTE las acciones físicas inmediatas de supervivencia (primeros auxilios).
+REGLAS ESTRICTAS:
+- No escribas introducciones (ej. "Mantén la calma").
+- Usa máximo 3 viñetas muy cortas y directas.
+- Lenguaje urgente y claro.
+- Termina siempre con "ACUDE AL VETERINARIO INMEDIATAMENTE."."""
+    
+    try:
+        # Usamos gemini-2.5-flash solo con texto para máxima velocidad
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+        return jsonify({"sos_steps": response.text.strip()})
+    except Exception as e:
+        print("Error en Emergencia:", e)
+        return jsonify({"error": "No se pudo procesar la emergencia, acude a un veterinario YA."}), 503
