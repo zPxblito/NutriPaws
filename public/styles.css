@@ -438,6 +438,14 @@ body.cursor-hover .cursor-trail-dot {
     to { opacity: 1; transform: translateY(0); }
 }
 
+.app-tab {
+    display: none;
+}
+.app-tab.active-tab {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
@@ -480,5 +488,71 @@ body.cursor-hover .cursor-trail-dot {
     }
     .emergency-text {
         display: none;
+    }
+    
+    .bottom-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: var(--bg-color);
+        border-top: 1px solid var(--border-color);
+        justify-content: space-around;
+        padding: 0.5rem 1rem;
+        z-index: 9998;
+        padding-bottom: env(safe-area-inset-bottom, 1rem); /* iPhone safe area */
+    }
+    .bottom-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: all 0.2s;
+        width: 60px;
+        height: 60px;
+        justify-content: center;
+    }
+    .bottom-nav-item img {
+        width: 24px;
+        height: 24px;
+        opacity: 0.6;
+        transition: all 0.2s;
+        filter: invert(0);
+    }
+    [data-theme="dark"] .bottom-nav-item img {
+        filter: invert(1);
+    }
+    .bottom-nav-item.active {
+        background: var(--brand-green);
+        color: white;
+    }
+    .bottom-nav-item.active img {
+        opacity: 1;
+        filter: invert(1); /* Siempre blanco en fondo verde */
+    }
+    .bottom-nav-item span {
+        font-size: 0.7rem;
+        margin-top: 4px;
+        font-weight: 600;
+    }
+    #menu-trigger {
+        display: none !important;
+    }
+    /* Añadir padding al dashboard para que la barra no tape el contenido */
+    #view-dashboard {
+        padding-bottom: 80px;
+    }
+}
+
+/* Ocultar la barra en PC */
+@media (min-width: 769px) {
+    .bottom-bar {
+        display: none !important;
     }
 }

@@ -260,6 +260,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (view) {
             view.style.display = 'block';
+            
+            // Mostrar u ocultar barra de navegación inferior
+            const bottomNav = document.getElementById('bottom-nav');
+            if (bottomNav) {
+                if (view === viewDashboard) {
+                    bottomNav.style.display = 'flex';
+                    window.switchTab('tab-inicio');
+                } else {
+                    bottomNav.style.display = 'none';
+                }
+            }
         }
         
         const footer = document.getElementById('main-footer');
@@ -2866,5 +2877,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 sendEmergencyRequest(txt);
             }
         });
+    }
+});
+
+// ==========================================
+// LÓGICA DE PESTAÑAS (BOTTOM NAVIGATION)
+// ==========================================
+window.switchTab = function(tabId) {
+    // 1. Ocultar todas las pestañas
+    document.querySelectorAll('.app-tab').forEach(tab => {
+        tab.classList.remove('active-tab');
+    });
+    // 2. Mostrar la seleccionada
+    document.getElementById(tabId).classList.add('active-tab');
+    
+    // 3. Actualizar botones de la barra inferior
+    document.querySelectorAll('.bottom-nav-item').forEach(btn => {
+        btn.classList.remove('active');
+        if(btn.getAttribute('onclick').includes(tabId)) {
+            btn.classList.add('active');
+        }
+    });
+    window.scrollTo({top: 0, behavior: 'smooth'});
+};
+
+// Eventos de la pestaña Perfil
+document.getElementById('btn-profile-theme')?.addEventListener('click', toggleTheme);
+document.getElementById('btn-profile-support')?.addEventListener('click', () => {
+    window.location.href = 'mailto:soporte@nutripaws.com';
+});
+document.getElementById('btn-profile-sub')?.addEventListener('click', () => {
+    document.getElementById('view-dashboard').style.display = 'none';
+    document.getElementById('bottom-nav').style.display = 'none';
+    document.getElementById('view-subscription').style.display = 'flex';
+});
+document.getElementById('btn-profile-logout')?.addEventListener('click', async () => {
+    try {
+        const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js');
+        const auth = getAuth();
+        await signOut(auth);
+    } catch (error) {
+        console.error("Error al cerrar sesión", error);
     }
 });
