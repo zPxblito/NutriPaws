@@ -559,6 +559,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function processMedicalHistory(notesArr) {
+        const medSelect = document.getElementById('medical-pet-select');
+        const selectedIdx = medSelect ? parseInt(medSelect.value) : activePetIndex;
+
+        if (!isNaN(selectedIdx) && selectedIdx !== -1 && pets[selectedIdx]) {
+            const pet = pets[selectedIdx];
+            if (!pet.medicalHistory) pet.medicalHistory = [];
+            
+            notesArr.forEach(note => {
+                pet.medicalHistory.push(note);
+            });
+            await savePetToFirestore(pet);
+        }
+    }
+
     // Procesar texto médico
     document.getElementById('medical-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -583,8 +598,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const data = await res.json();
-            const eventosArr = Array.isArray(data) ? data : [data]; // Compatible con single object u array
+            const eventosArr = data.events || [];
+            const historyArr = data.history_notes || [];
+            
             await processMedicalEvents(eventosArr);
+            await processMedicalHistory(historyArr);
             
             document.getElementById('medical-notes').value = '';
         } catch(err) {
@@ -628,10 +646,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 const data = await res.json();
-                const eventosArr = Array.isArray(data) ? data : [data];
-                await processMedicalEvents(eventosArr);
+                const eventosArr = data.events || [];
+                const historyArr = data.history_notes || [];
                 
-                alert("¡Documento procesado! Eventos agregados a la agenda.");
+                await processMedicalEvents(eventosArr);
+                await processMedicalHistory(historyArr);
+                
+                alert("¡Documento procesado! Eventos agregados a la agenda e historial.");
             } catch(err) {
                 console.error(err);
                 alert(err.message || "Error al procesar el documento con la IA.");
@@ -1735,7 +1756,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastPeso: null,
                 lastUnidadPeso: null,
                 lastDieta: null,
-                events: []
+                events: [],
+                medicalHistory: [],
+                tipoDieta: document.getElementById('create-pet-tipo-dieta') ? document.getElementById('create-pet-tipo-dieta').value : 'barf'
             };
             
             const anosIngresados = parseFloat(document.getElementById('create-pet-anos').value) || 0;
@@ -2008,10 +2031,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const unidadPeso = formData.get('unidad_peso') || 'kg';
         const actividad = formData.get('actividad');
         
-        let anos, meses, especie;
+        let anos, meses, especie, tipoDieta;
 
         if (activePetIndex === -1) {
             // Modo Invitado
+            tipoDieta = 'barf';
             const guestEspecieInput = document.querySelector('input[name="guest_especie"]:checked');
             if (!guestEspecieInput) {
                 alert("Por favor selecciona si es perro o gato.");
@@ -2036,6 +2060,7 @@ document.addEventListener('DOMContentLoaded', () => {
             anos = currentYears;
             meses = currentMonths;
             especie = currentPet.especie;
+            tipoDieta = currentPet.tipoDieta || 'barf';
         }
         
         if (anos === 0 && meses === 0) {
@@ -2080,24 +2105,32 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (totalMeses <= 6) comidas = 3;
         
         let ratios = [];
-        if(especie === 'perro') {
+        if (tipoDieta === 'mixta') {
             ratios = [
-                {name: "Carne Magra", img: "img/icon_meat.png", pct: 0.70},
-                {name: "Hueso Carnoso", img: "img/icon_bone.png", pct: 0.10},
-                {name: "Hígado", img: "img/icon_liver.png", pct: 0.05},
-                {name: "Otros órganos", img: "img/icon_organs.png", pct: 0.05},
-                {name: "Verduras (Opcional)", img: "img/icon_veggies.png", pct: 0.09, isOptional: true},
-                {name: "Frutas (Opcional)", img: "img/icon_fruits.png", pct: 0.01, isOptional: true}
+                {name: especie === 'perro' ? "Croquetas / Perrarina" : "Gatarina / Croquetas", img: "img/icon_kibble.png", pct: 0.80},
+                {name: "Carne Magra Fresca", img: "img/icon_meat.png", pct: 0.20}
             ];
             document.getElementById('taurina-warning').style.display = 'none';
         } else {
-            ratios = [
-                {name: "Carne Magra", img: "img/icon_meat.png", pct: 0.80},
-                {name: "Hueso Carnoso", img: "img/icon_bone.png", pct: 0.10},
-                {name: "Otros órganos", img: "img/icon_organs.png", pct: 0.06},
-                {name: "Hígado", img: "img/icon_liver.png", pct: 0.04}
-            ];
-            document.getElementById('taurina-warning').style.display = 'block';
+            if(especie === 'perro') {
+                ratios = [
+                    {name: "Carne Magra", img: "img/icon_meat.png", pct: 0.70},
+                    {name: "Hueso Carnoso", img: "img/icon_bone.png", pct: 0.10},
+                    {name: "Hígado", img: "img/icon_liver.png", pct: 0.05},
+                    {name: "Otros órganos", img: "img/icon_organs.png", pct: 0.05},
+                    {name: "Verduras (Opcional)", img: "img/icon_veggies.png", pct: 0.09, isOptional: true},
+                    {name: "Frutas (Opcional)", img: "img/icon_fruits.png", pct: 0.01, isOptional: true}
+                ];
+                document.getElementById('taurina-warning').style.display = 'none';
+            } else {
+                ratios = [
+                    {name: "Carne Magra", img: "img/icon_meat.png", pct: 0.80},
+                    {name: "Hueso Carnoso", img: "img/icon_bone.png", pct: 0.10},
+                    {name: "Otros órganos", img: "img/icon_organs.png", pct: 0.06},
+                    {name: "Hígado", img: "img/icon_liver.png", pct: 0.04}
+                ];
+                document.getElementById('taurina-warning').style.display = 'block';
+            }
         }
         
         document.getElementById('calculator-card').style.display = 'none';
@@ -2515,6 +2548,20 @@ window.generatePDFReport = function(pet) {
         `;
     }
 
+    // Formatear historial médico en general (Notas IA)
+    let medicalHistoryHTML = "";
+    if (pet.medicalHistory && pet.medicalHistory.length > 0) {
+        const historySorted = [...pet.medicalHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
+        medicalHistoryHTML = `
+            <div style="margin-bottom: 20px;">
+                <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">Historial Médico Clínico</h2>
+                <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #333;">
+                    ${historySorted.map(note => `<li style="margin-bottom: 5px;"><strong>${new Date(note.date).toLocaleDateString()}</strong> &mdash; ${note.note}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
     // Generamos un string HTML puro sin flexboxes frágiles
     const htmlString = `
         <div style="width: 700px; font-family: Arial, sans-serif; color: #000; background: #fff; text-align: left; padding: 0; margin: 0;">
@@ -2534,10 +2581,12 @@ window.generatePDFReport = function(pet) {
                 ${pesoHistoryHTML}
             </div>
 
+            ${medicalHistoryHTML}
+
             ${skinHistoryHTML}
 
             <div style="margin-bottom: 20px;">
-                <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">Plan Nutricional (Dieta BARF)</h2>
+                <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">Plan Nutricional (${pet.tipoDieta === 'mixta' ? 'Dieta Comercial Mixta' : 'Dieta BARF / Natural'})</h2>
                 <p style="margin: 5px 0; font-size: 16px;"><strong>Ración Diaria Total:</strong> <span style="color: #059669; font-weight: bold;">${pet.lastDieta.racionTotal}g</span></p>
                 <p style="margin: 5px 0; font-size: 16px;"><strong>Aporte Energético:</strong> ${pet.lastDieta.kcalTotales} kcal</p>
                 <p style="margin: 5px 0; font-size: 16px;"><strong>Distribución:</strong> ${pet.lastDieta.comidas} tomas de ${pet.lastDieta.recomendacion}</p>
@@ -2591,12 +2640,18 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'meloxicam_dog', name: 'Meloxicam (Dolor/Inflamación)', dose_mg_kg: 0.1, formula_desc: '0.1 mg por cada kg de peso' },
             { id: 'famotidina_dog', name: 'Famotidina (Acidez/Gástrico)', dose_mg_kg: 0.5, formula_desc: '0.5 mg por cada kg de peso' },
             { id: 'carbon_dog', name: 'Carbón Activado (Intoxicación)', dose_mg_kg: 1.0, formula_desc: '1 a 2 g por cada kg de peso (Mostraré 1g/kg conservador)' },
-            { id: 'benadryl_dog', name: 'Difenhidramina / Benadryl (Alergias)', dose_mg_kg: 2.0, formula_desc: '2.0 mg por cada kg de peso' }
+            { id: 'benadryl_dog', name: 'Difenhidramina / Benadryl (Alergias)', dose_mg_kg: 2.0, formula_desc: '2.0 mg por cada kg de peso' },
+            { id: 'doxiciclina_dog', name: 'Doxiciclina (Infecciones)', dose_mg_kg: 5.0, formula_desc: '5.0 mg por cada kg de peso (Cada 12 horas)' },
+            { id: 'tramadol_dog', name: 'Tramadol (Dolor Fuerte)', dose_mg_kg: 2.0, formula_desc: '2.0 mg por cada kg de peso' },
+            { id: 'vitk_dog', name: 'Vitamina K (Raticidas)', dose_mg_kg: 2.5, formula_desc: '2.5 mg por cada kg de peso' },
+            { id: 'peroxido_dog', name: 'Agua Oxigenada 3% (Inducir Vómito)', dose_mg_kg: 1.0, formula_desc: '1 ml por cada kg de peso (Máx 45ml)' }
         ],
         gato: [
             { id: 'meloxicam_cat', name: 'Meloxicam (Extremo Cuidado)', dose_mg_kg: 0.05, formula_desc: '0.05 mg por cada kg de peso (Solo 1 día)' },
             { id: 'famotidina_cat', name: 'Famotidina (Acidez)', dose_mg_kg: 0.5, formula_desc: '0.5 mg por cada kg de peso' },
-            { id: 'carbon_cat', name: 'Carbón Activado (Intoxicación)', dose_mg_kg: 1.0, formula_desc: '1 g por cada kg de peso' }
+            { id: 'carbon_cat', name: 'Carbón Activado (Intoxicación)', dose_mg_kg: 1.0, formula_desc: '1 g por cada kg de peso' },
+            { id: 'tramadol_cat', name: 'Tramadol (Dolor Fuerte)', dose_mg_kg: 1.0, formula_desc: '1.0 mg por cada kg de peso' },
+            { id: 'vitk_cat', name: 'Vitamina K (Raticidas)', dose_mg_kg: 2.5, formula_desc: '2.5 mg por cada kg de peso' }
         ]
     };
 

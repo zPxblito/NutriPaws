@@ -36,14 +36,23 @@ def process_record():
 
     prompt = f"""Extrae la siguiente información médica de este texto: '{text}'.
 IMPORTANTE: Ten en cuenta que la fecha de hoy es {fecha_hoy}. Si el texto dice "en 3 días", suma 3 días a la fecha de hoy.
-Devuelve ÚNICAMENTE un JSON válido que sea una LISTA de objetos (array) con esta estructura:
-[
-  {{
-    "event_type": "Vacuna | Chequeo | Pastilla | Nota",
-    "description": "descripción corta",
-    "scheduled_date": "YYYY-MM-DD (si aplica, o null)"
-  }}
-]"""
+Devuelve ÚNICAMENTE un JSON válido con esta estructura exacta:
+{{
+  "events": [
+    {{
+      "event_type": "Vacuna | Chequeo | Pastilla | Tratamiento",
+      "description": "descripción corta del evento a futuro",
+      "scheduled_date": "YYYY-MM-DD"
+    }}
+  ],
+  "history_notes": [
+    {{
+      "date": "{fecha_hoy}",
+      "note": "Síntoma o diagnóstico reportado (Ej: El veterinario indicó fiebre)"
+    }}
+  ]
+}}
+Solo llena 'events' si hay citas o cosas a futuro. Solo llena 'history_notes' si se mencionan síntomas, diagnósticos o hechos ocurridos hoy/pasado."""
     
     try:
         response = client.models.generate_content(
@@ -74,14 +83,23 @@ def analyze_document():
         
         prompt = f"""Eres un asistente veterinario experto. Lee este documento/registro médico.
 IMPORTANTE: Ten en cuenta que la fecha de hoy es {fecha_hoy}. Si se mencionan días relativos como "volver en una semana", suma esos días a la fecha de hoy.
-Extrae todos los eventos médicos relevantes (vacunas próximas, chequeos recomendados, tratamientos recetados) y devuelve ÚNICAMENTE un JSON válido que sea una LISTA de objetos (array) con esta estructura:
-[
-  {{
-    "event_type": "Vacuna | Chequeo | Pastilla | Tratamiento",
-    "description": "descripción corta de lo que hay que hacer o lo que se hizo",
-    "scheduled_date": "YYYY-MM-DD (si se menciona una fecha futura o específica, si no se sabe pon null)"
-  }}
-]"""
+Devuelve ÚNICAMENTE un JSON válido con esta estructura exacta:
+{{
+  "events": [
+    {{
+      "event_type": "Vacuna | Chequeo | Pastilla | Tratamiento",
+      "description": "descripción corta del evento a futuro",
+      "scheduled_date": "YYYY-MM-DD"
+    }}
+  ],
+  "history_notes": [
+    {{
+      "date": "{fecha_hoy}",
+      "note": "Síntoma, diagnóstico o hallazgo clínico reportado en el documento"
+    }}
+  ]
+}}
+Solo llena 'events' si hay citas o cosas a futuro. Solo llena 'history_notes' extrayendo los hallazgos, diagnósticos o recetas del documento."""
         
         response = client.models.generate_content(
             model="gemini-2.5-flash",
