@@ -51,9 +51,12 @@
     
     <!-- Menú Desplegable y Botón Premium (Totalmente Arriba a la Derecha) -->
     <div class="user-menu" id="user-menu-container" style="display: none; position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1000; align-items: center; gap: 0.8rem;">
-        <button id="btn-upgrade-early" class="btn-primary" style="display: none; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: bold; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);">
-            Únete a UltraPaws
-        </button>
+        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+            <button id="btn-upgrade-early" class="btn-primary" style="display: none; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: bold; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);">
+                Únete a UltraPaws
+            </button>
+            <span id="trial-days-left" style="display: none; color: var(--brand-green); font-size: 0.75rem; margin-top: 0.3rem; font-weight: 600;"></span>
+        </div>
         <button id="menu-trigger" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; width: 48px; height: 48px; color: white; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); transition: all 0.2s ease;" title="Menú">☰</button>
         <div id="dropdown-menu" style="display: none; position: absolute; right: 0; top: 60px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.8rem; width: 220px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
             <button id="theme-btn-menu" style="width: 100%; text-align: left; background: transparent; border: none; color: white; padding: 0.8rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1rem; border-radius: 6px; transition: background 0.2s;">☀️ Cambiar Tema</button>
@@ -496,7 +499,7 @@
     <!-- SDK de PayPal (Live) -->
     <script src="https://www.paypal.com/sdk/js?client-id=AcYQgTvYLjNELcrzArrXrwDYtq9lCYixoyQyKz-NMwlbt9pAhJm5HyfOIWhk3l3qa_LDGLW-SZEo8uWI&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
 
-    <script type="module" src="firebase-auth.js?v=23"></script>
-    <script src="app.js?v=23"></script>
+    <script type="module" src="firebase-auth.js?v=24"></script>
+    <script src="app.js?v=24"></script>
 </body>
 </html>
