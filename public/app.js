@@ -129,6 +129,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         const userData = userDoc.data();
                         const now = Date.now();
                         
+                        // Cargar Avatar
+                        if (userData.avatarUrl) {
+                            const avatarImg = document.getElementById('profile-avatar-img');
+                            if(avatarImg) {
+                                avatarImg.src = userData.avatarUrl;
+                                avatarImg.style.filter = 'none';
+                                avatarImg.style.opacity = '1';
+                            }
+                        }
+                        
                         const btnUpgradeEarly = document.getElementById('btn-upgrade-early');
                         const trialDaysLeft = document.getElementById('trial-days-left');
                         
@@ -2901,22 +2911,106 @@ window.switchTab = function(tabId) {
     window.scrollTo({top: 0, behavior: 'smooth'});
 };
 
-// Eventos de la pestaña Perfil
-document.getElementById('btn-profile-theme')?.addEventListener('click', toggleTheme);
-document.getElementById('btn-profile-support')?.addEventListener('click', () => {
-    window.location.href = 'mailto:soporte@nutripaws.com';
-});
-document.getElementById('btn-profile-sub')?.addEventListener('click', () => {
-    document.getElementById('view-dashboard').style.display = 'none';
-    document.getElementById('bottom-nav').style.display = 'none';
-    document.getElementById('view-subscription').style.display = 'flex';
-});
-document.getElementById('btn-profile-logout')?.addEventListener('click', async () => {
-    try {
-        const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js');
-        const auth = getAuth();
-        await signOut(auth);
-    } catch (error) {
-        console.error("Error al cerrar sesión", error);
+// ==========================================
+// LÓGICA DE PERFIL Y AVATAR
+// ==========================================
+window.toggleTheme = function() {
+    const htmlObj = document.documentElement;
+    let isDark = htmlObj.getAttribute('data-theme') !== 'light';
+    if(isDark) {
+        htmlObj.setAttribute('data-theme', 'light');
+    } else {
+        htmlObj.setAttribute('data-theme', 'dark');
+    }
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+    // Eventos de la pestaña Perfil
+    const btnTheme = document.getElementById('btn-profile-theme');
+    if(btnTheme) btnTheme.addEventListener('click', window.toggleTheme);
+
+    const btnSupport = document.getElementById('btn-profile-support');
+    if(btnSupport) btnSupport.addEventListener('click', () => { window.location.href = 'mailto:soporte@nutripaws.com'; });
+
+    const btnSub = document.getElementById('btn-profile-sub');
+    if(btnSub) {
+        btnSub.addEventListener('click', () => {
+            document.getElementById('view-dashboard').style.display = 'none';
+            document.getElementById('bottom-nav').style.display = 'none';
+            document.getElementById('view-subscription').style.display = 'flex';
+        });
+    }
+
+    const btnLogout = document.getElementById('btn-profile-logout');
+    if(btnLogout) {
+        btnLogout.addEventListener('click', async () => {
+            try {
+                if(window.firebaseAuth && window.firebaseAuth.auth) {
+                    await window.firebaseAuth.signOut(window.firebaseAuth.auth);
+                }
+            } catch (error) {
+                console.error("Error al cerrar sesión", error);
+            }
+        });
+    }
+
+    // Subida de Avatar (Compresión)
+    const avatarContainer = document.getElementById('profile-avatar-container');
+    const avatarInput = document.getElementById('avatar-input');
+    const avatarImg = document.getElementById('profile-avatar-img');
+
+    if(avatarContainer && avatarInput && avatarImg) {
+        avatarContainer.addEventListener('click', () => avatarInput.click());
+
+        avatarInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = async () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 300;
+                    const MAX_HEIGHT = 300;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    avatarImg.src = dataUrl;
+                    avatarImg.style.filter = 'none';
+                    avatarImg.style.opacity = '1';
+
+                    if (currentUser && window.firebaseAuth) {
+                        try {
+                            const userRef = window.firebaseAuth.doc(window.firebaseAuth.db, 'users', currentUser.uid);
+                            await window.firebaseAuth.updateDoc(userRef, { avatarUrl: dataUrl });
+                        } catch(err) {
+                            console.error("Error guardando avatar", err);
+                        }
+                    }
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
     }
 });

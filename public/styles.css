@@ -478,7 +478,7 @@ body.cursor-hover .cursor-trail-dot {
     }
     .btn-emergency {
         top: auto;
-        bottom: 1.5rem;
+        bottom: 90px;
         left: 1.5rem;
         width: 60px;
         height: 60px;
