@@ -224,7 +224,7 @@ body.cursor-hover .cursor-trail-dot {
     flex-direction: column;
 }
 
-.age-group {
+.age-group, .dose-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
@@ -417,6 +417,30 @@ body.cursor-hover .cursor-trail-dot {
     to { transform: rotate(360deg); }
 }
 
-@media (max-width: 500px) {
-    .ingredients-grid { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+    body {
+        padding: 1rem 0.5rem;
+    }
+    .logo {
+        font-size: 2.5rem;
+    }
+    .card {
+        padding: 1.5rem;
+    }
+    .options-grid, .age-group, .summary-stats-grid, .ingredients-grid, .dose-grid {
+        grid-template-columns: 1fr;
+    }
+    .stat-box.main-stat .stat-value {
+        font-size: 2.8rem;
+    }
+    header {
+        margin-bottom: 1.5rem;
+    }
+    .btn-primary, .btn-secondary {
+        padding: 1rem;
+        font-size: 1rem;
+    }
+    .step h2 {
+        font-size: 1.2rem;
+    }
 }
