@@ -60,11 +60,20 @@ Solo llena 'events' si hay citas o cosas a futuro. Solo llena 'history_notes' si
             contents=prompt
         )
         text_resp = response.text
-        text_resp = re.sub(r'```json\n?', '', text_resp)
-        text_resp = re.sub(r'```\n?', '', text_resp)
-        return jsonify(json.loads(text_resp.strip()))
+        start_idx = text_resp.find('{')
+        end_idx = text_resp.rfind('}')
+        if start_idx != -1 and end_idx != -1:
+            json_str = text_resp[start_idx:end_idx+1]
+        else:
+            json_str = text_resp
+        return jsonify(json.loads(json_str))
     except Exception as e:
-        return jsonify({"error": "En estos momentos el servicio de análisis se encuentra al máximo, intente de nuevo en un minuto."}), 503
+        error_msg = str(e)
+        try:
+            error_msg += " | Resp: " + text_resp
+        except:
+            pass
+        return jsonify({"error": f"Error: {error_msg}"}), 503
 
 @app.route('/api/analyze_document', methods=['POST'])
 def analyze_document():
@@ -112,7 +121,13 @@ Solo llena 'events' si hay citas o cosas a futuro. Solo llena 'history_notes' ex
         return jsonify(json.loads(text_resp.strip()))
         
     except Exception as e:
-        return jsonify({"error": "En estos momentos el servicio de análisis se encuentra al máximo, intente de nuevo en un minuto."}), 503
+        print("Error en Gemini Vision:", e)
+        error_msg = str(e)
+        try:
+            error_msg += " | Resp: " + text_resp
+        except:
+            pass
+        return jsonify({"error": f"Error: {error_msg}"}), 503
 
 @app.route('/api/skinguard/analyze', methods=['POST'])
 def skinguard_analyze():
@@ -145,15 +160,19 @@ Las opciones para urgencia son: BAJA, MEDIA, ALTA."""
         )
         
         text_resp = response.text
-        text_resp = re.sub(r'```json\n?', '', text_resp)
-        text_resp = re.sub(r'```\n?', '', text_resp)
-        
-        return jsonify(json.loads(text_resp.strip()))
+        start_idx = text_resp.find('{')
+        end_idx = text_resp.rfind('}')
+        if start_idx != -1 and end_idx != -1:
+            json_str = text_resp[start_idx:end_idx+1]
+        else:
+            json_str = text_resp
+        return jsonify(json.loads(json_str))
 
     except Exception as e:
         print("Error en Gemini Vision:", e)
+        error_msg = str(e)
         return jsonify({
-            "error": "En estos momentos el servicio de análisis se encuentra al máximo, intente de nuevo en un minuto."
+            "error": f"Error: {error_msg}"
         }), 503
 
 @app.route('/api/emergency_sos', methods=['POST'])
