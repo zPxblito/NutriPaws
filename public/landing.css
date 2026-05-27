@@ -305,3 +305,19 @@ footer a {
     .feature-split { flex-direction: column !important; text-align: center; }
     .nav-links { display: none; }
 }
+
+@media (max-width: 600px) {
+    .hero { padding-top: 6rem; gap: 2rem; }
+    .hero h1 { font-size: 2.2rem; line-height: 1.2; }
+    .hero p { font-size: 1rem; margin-bottom: 1.5rem; }
+    .hero-buttons { flex-direction: column; width: 100%; gap: 1rem; }
+    .hero-buttons a { width: 100%; text-align: center; margin: 0 !important; }
+    .feature-split { padding: 4rem 5%; gap: 2rem; }
+    .feature-split-content h2 { font-size: 2rem; }
+    .feature-split-content p { font-size: 1rem; }
+    .section-title { font-size: 2.2rem; margin-bottom: 2rem; }
+    .pricing-card { padding: 2.5rem 1.5rem; }
+    .price { font-size: 3.5rem; }
+    header { padding: 1rem 5%; flex-direction: column; gap: 1rem; }
+    .logo { margin-bottom: 0.5rem; }
+}

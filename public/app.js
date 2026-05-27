@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     // --- SISTEMA DE TOASTS ---
     window.showToast = function(msg, type = 'info') {
         let container = document.getElementById('toast-container');
@@ -9,10 +9,10 @@
         }
         const toast = document.createElement('div');
         toast.className = `custom-toast ${type}`;
-        let icon = 'âœ…';
-        if(type === 'error') icon = 'âŒ';
-        if(type === 'warning') icon = 'âš ï¸';
-        if(type === 'info') icon = 'â„¹ï¸';
+        let icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-right:8px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+        if(type === 'error') icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-right:8px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        if(type === 'warning') icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-right:8px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+        if(type === 'info') icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-right:8px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
         const messageStr = (typeof msg === 'string') ? msg : (msg && msg.message ? msg.message : String(msg));
         toast.innerHTML = `<span style="font-size: 1.2rem;">${icon}</span><span class="custom-toast-message">${messageStr.replace(/\n/g, '<br>')}</span>`;
         container.appendChild(toast);
