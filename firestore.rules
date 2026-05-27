@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for auth and subscription validation
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function hasActiveSubscription(uid) {
+      let userDoc = get(/databases/$(database)/documents/users/$(uid));
+      // Permitir si la suscripción es 'active' o si el periodo de trial aún no expira
+      return userDoc.data.subscriptionStatus == 'active' || 
+             (userDoc.data.subscriptionStatus == 'trial' && userDoc.data.trialEndsAt > request.time.toMillis());
+    }
+
+    match /users/{uid} {
+      // Un usuario solo puede leer y escribir su propio documento de perfil
+      allow read, write: if isOwner(uid);
+
+      match /pets/{petId} {
+        // Para leer o escribir mascotas, debe ser el dueño Y tener suscripción activa o trial vigente
+        allow read, write: if isOwner(uid) && hasActiveSubscription(uid);
+      }
+    }
+  }
+}

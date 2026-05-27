@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriPaws | El Mejor Asistente de Salud y Nutrición para tu Mascota</title>
+    
+    <!-- SEO Básico -->
+    <meta name="description" content="NutriPaws es tu asistente inteligente para mascotas. Calcula dietas BARF, agenda chequeos médicos, guarda historiales y detecta problemas de piel con nuestra IA dermatológica.">
+    <meta name="keywords" content="mascotas, nutrición canina, dieta BARF, veterinario IA, salud animal, perros, gatos, calendario mascotas">
+    <meta name="author" content="NutriPaws">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
+    <meta property="og:title" content="NutriPaws | Asistente Inteligente para Mascotas">
+    <meta property="og:description" content="Calcula dietas, analiza la piel con IA y agenda los chequeos de tu mejor amigo.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nutripaws.app">
+    <meta property="og:image" content="https://nutripaws.app/assets/logo-fondo.png">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NutriPaws | Salud e IA para tu Mascota">
+    <meta name="twitter:description" content="La herramienta definitiva para dueños responsables. Nutrición, calendario y diagnósticos con IA.">
+
+    <link rel="icon" type="image/png" href="assets/logo-fondo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=4">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* Ajustes extra para descompactar la UI */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem; /* Más espacio */
+        }
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .view-section {
+                padding: 1rem;
+                margin-top: 1rem;
+            }
+        }
+        .view-section {
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+    </style>
+
+    <style>
+    /* Forzar barra inferior en PC para que no desaparezca la navegacion */
+    @media (min-width: 769px) {
+        .bottom-bar {
+            display: flex !important;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--bg-color);
+            border-top: 1px solid var(--border-color);
+            justify-content: center;
+            gap: 2rem;
+            padding: 1rem;
+            z-index: 9998;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+            width: 80px;
+            height: 70px;
+            justify-content: center;
+        }
+        .bottom-nav-item img {
+            width: 28px;
+            height: 28px;
+            opacity: 0.6;
+            transition: all 0.2s;
+            filter: invert(0);
+        }
+        [data-theme="dark"] .bottom-nav-item img {
+            filter: invert(1);
+        }
+        .bottom-nav-item.active {
+            background: var(--brand-green);
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(141, 198, 63, 0.3);
+        }
+        .bottom-nav-item.active img {
+            opacity: 1;
+            filter: invert(1);
+        }
+        .bottom-nav-item span {
+            font-size: 0.85rem;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+        main.container {
+            padding-bottom: 120px !important;
+        }
+    }
+    </style>
+</head>
+<body>
+    <input type="file" id="dashboard-avatar-upload" accept="image/*" style="display: none;">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    
+    <!-- Menú Desplegable y Botón Premium (Totalmente Arriba a la Derecha) -->
+    <div class="user-menu" id="user-menu-container" style="display: none; position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1000; align-items: center; gap: 0.8rem;">
+        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+            <button id="btn-upgrade-early" class="btn-primary" style="display: none; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: bold; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);">
+                Únete a UltraPaws
+            </button>
+            <span id="trial-days-left" style="display: none; color: var(--brand-green); font-size: 0.75rem; margin-top: 0.3rem; font-weight: 600;"></span>
+        </div>
+        <button id="menu-trigger" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; width: 48px; height: 48px; color: white; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); transition: all 0.2s ease;" title="Menú">☰</button>
+        <div id="dropdown-menu" style="display: none; position: absolute; right: 0; top: 60px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.8rem; width: 220px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <button id="theme-btn-menu" style="width: 100%; text-align: left; background: transparent; border: none; color: white; padding: 0.8rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1rem; border-radius: 6px; transition: background 0.2s;">☀️ Cambiar Tema</button>
+            <button style="width: 100%; text-align: left; background: transparent; border: none; color: var(--text-muted); padding: 0.8rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1rem; border-radius: 6px; transition: background 0.2s;">Soporte</button>
+            <button id="btn-logout" style="width: 100%; text-align: left; background: transparent; border: none; color: #ff6b6b; padding: 0.8rem; cursor: pointer; font-size: 1rem; border-radius: 6px; transition: background 0.2s;">Cerrar Sesión</button>
+        </div>
+    </div>
+    
+    <header style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 3rem; margin-bottom: 1rem;">
+        <div class="logo" style="text-align: center;">
+            <img src="assets/logo-transparente.png" alt="NutriPaws Logo" style="height: 220px; max-width: 90vw; object-fit: contain; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5)); transition: transform 0.3s ease;">
+        </div>
+        <p class="subtitle" id="header-subtitle" style="margin-top: 1rem; font-size: 1.2rem; font-weight: 500; color: rgba(255,255,255,0.9); letter-spacing: 1px;">Tu Asistente Médico y Nutricional</p>
+    </header>
+
+    <!-- ================= VISTA 1: LOGIN ================= -->
+    <main class="container view-section" id="view-login" style="max-width: 500px;">
+        <div class="card" style="text-align: center; padding: 3rem 2rem;">
+            <h2 id="auth-title" style="margin-bottom: 1rem; font-size: 1.8rem;">Bienvenido a NutriPaws</h2>
+            <p id="auth-subtitle" style="color: var(--text-muted); margin-bottom: 2.5rem; font-size: 1.1rem;">Inicia sesión para gestionar el perfil de tu mascota</p>
+            <div id="login-container">
+                <button id="btn-login-google" style="width: 100%; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px; border: none; background: white; color: #333; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s;">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 24px;" alt="Google">
+                    Continuar con Google
+                </button>
+                  <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+                    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                    <span style="padding: 0 1rem; color: var(--text-muted); font-size: 0.9rem;">O usa tu correo</span>
+                    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                </div>
+
+                <form id="login-form">
+                    <div class="form-group" style="text-align: left; margin-bottom: 1.5rem;">
+                        <label style="font-size: 1rem;">Correo Electrónico</label>
+                        <input type="email" id="login-email" placeholder="ejemplo@correo.com" required style="padding: 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; margin-top: 0.5rem;">
+                    </div>
+                    <div class="form-group" style="text-align: left; margin-bottom: 2rem;">
+                        <label style="font-size: 1rem;">Contraseña</label>
+                        <input type="password" id="login-password" placeholder="••••••••" required minlength="6" style="padding: 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; margin-top: 0.5rem;">
+                    </div>
+                    <div class="form-group" id="confirm-password-group" style="display: none; text-align: left; margin-bottom: 2rem;">
+                        <label style="font-size: 1rem;">Confirmar Contraseña</label>
+                        <input type="password" id="login-password-confirm" placeholder="••••••••" minlength="6" style="padding: 1rem; font-size: 1rem; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; margin-top: 0.5rem;">
+                    </div>
+                    <button type="submit" id="btn-submit-email" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 8px;">Iniciar Sesión</button>
+                    
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <a href="#" id="toggle-auth-mode" style="color: var(--primary); text-decoration: none; font-size: 0.95rem;">¿No tienes cuenta? Regístrate</a>
+                        <br><br>
+                        <a href="#" id="help-resend-email" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; display: inline-block;">¿No recibiste el correo de verificación?</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= VISTA 2: DASHBOARD ================= -->
+    <main class="container view-section" id="view-dashboard" style="display: none; max-width: 1000px; width: 100%;">
+        
+        <!-- ================= TAB: INICIO ================= -->
+        <section id="tab-inicio" class="app-tab active-tab">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 3rem;">
+            <h2 style="font-size: 2.2rem; margin: 0;">Hola, <span id="user-name-display">Usuario</span> <button id="edit-name-btn" style="background:none; border:none; color: var(--text-muted); cursor:pointer; font-size: 1.4rem; transition: transform 0.2s; margin-left: 0.5rem;" title="Editar nombre"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button></h2>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn-emergency" id="btn-emergency-sos">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span class="emergency-text">Emergencia</span>
+                </button>
+                <button class="btn-primary" id="btn-goto-create-pet" style="padding: 1rem 2rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s;">+ Añadir Mascota</button>
+            </div>
+        </div>
+
+        <!-- Contenedor Dinámico de Mascotas -->
+        <div id="pets-list-container" style="margin-bottom: 3rem; display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="text-align: center; padding: 3rem; background: rgba(15, 23, 42, 0.4); border-radius: 20px; border: 2px dashed rgba(255,255,255,0.1);">
+                <p style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1rem;">No tienes mascotas registradas aún.</p>
+                <p style="color: var(--text-muted); font-size: 1rem;">Añade tu primer peludo para comenzar.</p>
+            </div>
+        </div>
+
+        </section>
+
+        <!-- ================= TAB: CLÍNICA ================= -->
+        <section id="tab-clinica" class="app-tab">
+            <!-- Módulo: Registros Médicos y Calendario -->
+            <div class="dashboard-grid" style="margin-bottom: 2.5rem;">
+            <div class="card" style="grid-column: span 2;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="font-size: 1.5rem; margin: 0;">Registro Médico IA</h2>
+                    <select id="medical-pet-select" style="padding: 0.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white;"></select>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;">
+                    Escribe notas o sube un documento. La IA de NutriPaws extraerá los eventos (vacunas, medicinas, chequeos) y los añadirá a la agenda de la mascota seleccionada automáticamente.
+                </p>
+                
+                <form id="medical-form">
+                    <textarea id="medical-notes" placeholder="Ej: Hoy le tocaba la Séxtuple pero el doc dijo que volvamos en 5 días..." style="width: 100%; height: 120px; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-family: inherit; margin-bottom: 1.5rem; resize: none; font-size: 1rem;"></textarea>
+                    
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button id="btn-process-medical" class="btn-primary" style="flex: 1;">Analizar y Agendar</button>
+                        <button type="button" id="btn-upload-medical-doc" class="btn-secondary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                            Subir PDF/Foto
+                        </button>
+                        <input type="file" id="medical-doc-input" accept=".pdf,image/*" style="display: none;">
+                    </div>
+                </form>
+            </div>
+
+            <!-- Columna 2: Calendario -->
+            <div class="card" style="padding: 2rem;">
+                <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem;">Próximos Eventos</h3>
+                <div id="calendar-events" style="margin-top: 1rem;">
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">No hay citas agendadas.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Módulo: AI-SkinGuard -->
+        <div class="card" style="margin-bottom: 2.5rem; padding: 2.5rem; border: 1px solid rgba(16, 185, 129, 0.3); background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(6, 78, 59, 0.4));">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.5rem; margin: 0; color: #34d399; display: flex; align-items: center; gap: 0.5rem;">
+                    Análisis de Piel
+                </h3>
+                <select id="skin-pet-select" style="padding: 0.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white;"></select>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 1rem; max-width: 600px;">
+                ¿Tu peludo tiene un sarpullido, costra o zona sin pelo? Sube una foto y nuestra IA dermatológica te dará una evaluación instantánea, y la guardará en el expediente de la mascota seleccionada.
+            </p>
+            
+            <div id="skinguard-upload-area" style="border: 2px dashed rgba(52, 211, 153, 0.4); border-radius: 12px; padding: 2rem; text-align: center; background: rgba(0,0,0,0.2); cursor: pointer; transition: all 0.3s; margin-bottom: 1.5rem; position: relative; overflow: hidden;">
+                <input type="file" id="skinguard-input" accept="image/*" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                <div id="skinguard-upload-content">
+                    <div style="margin-bottom: 1rem; color: #34d399;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></div>
+                    <p style="font-size: 1.1rem; font-weight: bold; color: var(--text-main);">Toca para abrir la cámara o subir foto</p>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">Formatos soportados: JPG, PNG</p>
+                </div>
+                <div id="skinguard-loading" style="display: none; align-items: center; justify-content: center; flex-direction: column;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid rgba(52, 211, 153, 0.1); border-top-color: #34d399; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+                    <p style="color: #34d399; font-weight: bold;">Analizando con Gemini Vision...</p>
+                </div>
+            </div>
+
+            <div id="skinguard-results" style="display: none; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
+                <h4 style="color: #34d399; margin-bottom: 0.5rem; font-size: 1.2rem;">Resultado del Análisis</h4>
+                <p><strong>Diagnóstico Presuntivo:</strong> <span id="sg-res-diag"></span></p>
+                <p><strong>Probabilidad:</strong> <span id="sg-res-prob"></span></p>
+                <p><strong>Urgencia:</strong> <span id="sg-res-urg" style="font-weight: bold;"></span></p>
+                <div style="margin-top: 1rem;">
+                    <strong>Explicación Médica:</strong>
+                    <p id="sg-res-exp" style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.95rem;"></p>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <strong>Recomendaciones / Primeros Auxilios:</strong>
+                    <ul id="sg-res-aid" style="margin-top: 0.5rem; margin-left: 1.5rem; color: var(--text-muted); font-size: 0.95rem;"></ul>
+                </div>
+            </div>
+        </div>
+
+            </div>
+        </section>
+
+        <!-- ================= TAB: DIETAS ================= -->
+        <section id="tab-dietas" class="app-tab">
+            <!-- Módulo: Calculadora Rápida -->
+        <div class="card" style="padding: 2.5rem; text-align: center; border: 1px solid rgba(139, 92, 246, 0.3); background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 27, 75, 0.8));">
+            <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: #a78bfa;">Calculadora Rápida</h3>
+            <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1.1rem;">¿Quieres calcular una dieta para una mascota que no es tuya?</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button class="btn-secondary" id="btn-quick-calc" style="padding: 1rem 2rem; font-size: 1.1rem; border: 1px solid #8b5cf6; background: rgba(139, 92, 246, 0.1); color: #c4b5fd;">Usar Calculadora Rápida</button>
+            </div>
+        </div>
+
+        <!-- Módulo: Calculadora de Dosificación Médica (Urgencias / Venta Libre) -->
+        <div class="card" style="margin-top: 2.5rem; padding: 2.5rem; border: 1px solid rgba(239, 68, 68, 0.3); background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(127, 29, 29, 0.4));">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.5rem; margin: 0; color: #f87171; display: flex; align-items: center; gap: 0.5rem;">
+                    Dosificación de Emergencia
+                </h3>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem; max-width: 600px;">
+                <strong style="color: #ef4444;">ADVERTENCIA:</strong> Esta es una guía matemática estricta basada en fórmulas veterinarias estándar para medicamentos de primeros auxilios. <strong>NO sustituye el criterio de un profesional.</strong> Usar solo en caso de emergencia extrema.
+            </p>
+            
+            <div class="dose-grid" style="margin-bottom: 1.5rem;">
+                <div class="form-group">
+                    <label style="font-size: 1rem; color: var(--text-main);">Especie</label>
+                    <select id="dose-species" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 1rem;">
+                        <option value="perro">Perro</option>
+                        <option value="gato">Gato</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 1rem; color: var(--text-main);">Peso (Kg)</label>
+                    <input type="number" id="dose-weight" placeholder="Ej: 15" min="0.1" step="0.1" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 1rem;">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label style="font-size: 1rem; color: var(--text-main);">Medicamento (Venta Libre)</label>
+                <select id="dose-medication" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 1rem;">
+                    <!-- Se llena con JS -->
+                </select>
+                <p id="dose-warning-text" style="color: #fbbf24; font-size: 0.85rem; margin-top: 0.5rem; display: none;"></p>
+            </div>
+            
+            <button id="btn-calculate-dose" class="btn-primary" style="width: 100%; background: #ef4444; border: none; padding: 1rem; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">Calcular Dosis</button>
+            
+            <div id="dose-result-container" style="display: none; margin-top: 1.5rem; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(239, 68, 68, 0.3);">
+                <h4 style="color: #f87171; margin-bottom: 0.5rem; font-size: 1.2rem; text-align: center;">Dosis Recomendada</h4>
+                <p id="dose-result-value" style="font-size: 2rem; font-weight: bold; color: white; text-align: center; margin-bottom: 0.5rem;">--</p>
+                <p id="dose-result-math" style="color: var(--text-muted); font-size: 0.9rem; text-align: center;"></p>
+            </div>
+        </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB: PERFIL ================= -->
+        <section id="tab-perfil" class="app-tab">
+            <div class="card" style="padding: 2.5rem; text-align: center;">
+                <div id="profile-avatar-container" style="width: 80px; height: 80px; background: rgba(52, 211, 153, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; transition: all 0.3s;" title="Cambiar foto de perfil">
+                    <img id="profile-avatar-img" src="assets/icons/user.png" style="width: 40px; filter: invert(1); opacity: 0.8; object-fit: cover; width: 100%; height: 100%;" alt="User">
+                    <div style="position: absolute; bottom: 0; background: rgba(0,0,0,0.6); width: 100%; text-align: center; font-size: 0.7rem; padding: 2px 0;">Editar</div>
+                    <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+                </div>
+                <h3 style="font-size: 1.8rem; margin-bottom: 0.5rem;" id="profile-name-display">Usuario</h3>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">Gestiona tu cuenta y ajustes</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 400px; margin: 0 auto;">
+                    <button id="btn-profile-theme" class="btn-secondary" style="background: rgba(255,255,255,0.05); border: none; text-align: left; padding: 1.2rem; display: flex; align-items: center; gap: 1rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        Cambiar Tema
+                    </button>
+                    <button id="btn-profile-support" class="btn-secondary" style="background: rgba(255,255,255,0.05); border: none; text-align: left; padding: 1.2rem; display: flex; align-items: center; gap: 1rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        Soporte
+                    </button>
+                    <button id="btn-profile-sub" class="btn-primary" style="background: linear-gradient(45deg, #10b981, #059669); border: none; text-align: left; padding: 1.2rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        Suscripción UltraPaws
+                    </button>
+                    <button id="btn-profile-logout" class="btn-secondary" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; text-align: left; padding: 1.2rem; display: flex; align-items: center; gap: 1rem; margin-top: 1rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= VISTA 2.5: CREAR PERFIL ================= -->
+    <main class="container view-section" id="view-create-pet" style="display: none; max-width: 600px;">
+        <button id="btn-back-from-create" class="btn-secondary" style="margin-bottom: 1.5rem; border: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.5rem; font-size: 1rem; background: rgba(255,255,255,0.1);">
+            <span>◀ Cancelar</span>
+        </button>
+
+        <div class="card" style="padding: 2.5rem;">
+            <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem; text-align: center;">Nuevo Miembro de la Familia</h2>
+            <p style="color: var(--text-muted); text-align: center; margin-bottom: 2rem;">Ingresa los datos principales de tu mascota</p>
+
+            <form id="create-pet-form">
+                <!-- Avatar Upload (Aislado aquí) -->
+                <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
+                    <label for="pet-avatar-upload" style="cursor: pointer; display: block; position: relative;" title="Subir foto de la mascota">
+                        <img id="pet-avatar-img" src="" style="display: none; width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.2);">
+                        <div id="pet-avatar-placeholder" style="width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 2px dashed rgba(255,255,255,0.3); transition: background 0.3s;">
+                            📷
+                        </div>
+                    </label>
+                    <input type="file" id="pet-avatar-upload" accept="image/*" style="display: none;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-size: 1.1rem;">¿Cómo se llama?</label>
+                    <input type="text" id="create-pet-name" placeholder="Ej: Max, Luna..." required style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: white; font-size: 1.1rem;">
+                </div>
+
+                <div class="options-grid" style="margin-bottom: 1.5rem;">
+                    <label class="radio-card">
+                        <input type="radio" name="create_especie" value="perro" required>
+                        <span class="card-content" style="font-size: 1.1rem; padding: 1rem;">🐶 Perro</span>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="create_especie" value="gato">
+                        <span class="card-content" style="font-size: 1.1rem; padding: 1rem;">🐱 Gato</span>
+                    </label>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-size: 1.1rem;">Raza</label>
+                    <select id="create-pet-raza" required style="padding: 1rem; font-size: 1.1rem;">
+                        <option value="">Selecciona primero la especie...</option>
+                    </select>
+                </div>
+
+                <div class="age-group" style="margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label style="font-size: 1.1rem;">Años</label>
+                        <input type="number" id="create-pet-anos" step="0.1" min="0" max="30" placeholder="0" style="padding: 1rem; font-size: 1.1rem;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 1.1rem;">Meses</label>
+                        <input type="number" id="create-pet-meses" step="0.1" min="0" placeholder="0" style="padding: 1rem; font-size: 1.1rem;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label style="font-size: 1.1rem;">Tipo de Dieta Preferida 🥩🥣</label>
+                    <select id="create-pet-tipo-dieta" style="padding: 1rem; font-size: 1.1rem; width: 100%; border: 1px solid var(--brand-green);">
+                        <option value="barf">Dieta BARF / Natural (100% Fresco)</option>
+                        <option value="mixta">Dieta Mixta (Croquetas/Perrarina + Fresco)</option>
+                    </select>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem; line-height: 1.4;">
+                        El cálculo de la Dieta Mixta se hará con un 80% Comercial y 20% Fresco para máxima seguridad nutricional.
+                    </p>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 3rem;">
+                    <label style="font-size: 1.1rem;">Personalidad (Opcional) 💖</label>
+                    <select id="create-pet-personalidad" style="padding: 1rem; font-size: 1.1rem; width: 100%;">
+                        <option value="">No especificar</option>
+                        <option value="jugueton">Muy juguetón / Activo</option>
+                        <option value="dormilon">Dormilón / Tranquilo</option>
+                        <option value="timido">Tímido / Reservado</option>
+                        <option value="guardian">Guardián protector</option>
+                        <option value="mimoso">Súper mimoso</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary" style="padding: 1.2rem; font-size: 1.2rem; width: 100%; border-radius: 12px; margin-top: 1rem;">Guardar Perfil</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- ================= VISTA 3: CALCULADORA ================= -->
+    <main class="container view-section" id="view-calculator" style="display: none; max-width: 800px;">
+        <button id="btn-close-calculator" class="btn-secondary" style="margin-bottom: 1.5rem; border: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.5rem; font-size: 1.1rem; background: rgba(255,255,255,0.1);">
+            <span>◀ Volver al Dashboard</span>
+        </button>
+
+        <div class="card" id="calculator-card" style="padding: 2.5rem;">
+            <form id="barf-form">
+                
+                <div id="calc-guest-fields" style="display: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2rem; margin-bottom: 2rem;">
+                    <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: #a78bfa;">Datos Base del Paciente (No Guardado)</h2>
+                    <div class="options-grid" style="margin-bottom: 1.5rem;">
+                        <label class="radio-card">
+                            <input type="radio" name="guest_especie" value="perro">
+                            <span class="card-content" style="font-size: 1.1rem; padding: 1rem;">🐶 Perro</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="guest_especie" value="gato">
+                            <span class="card-content" style="font-size: 1.1rem; padding: 1rem;">🐱 Gato</span>
+                        </label>
+                    </div>
+                    <div class="age-group">
+                        <div class="form-group">
+                            <label style="font-size: 1.1rem;">Años</label>
+                            <input type="number" name="guest_anos" id="guest_anos" step="0.1" min="0" max="30" placeholder="0" style="padding: 1rem; font-size: 1.1rem;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 1.1rem;">Meses</label>
+                            <input type="number" name="guest_meses" id="guest_meses" step="0.1" min="0" placeholder="0" style="padding: 1rem; font-size: 1.1rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step" id="step-1" style="display: none;">
+                    <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem;"><span class="step-num">1</span> Datos Físicos Actuales</h2>
+                    
+                    <p style="color: var(--brand-green); margin-bottom: 1.5rem; font-size: 1.1rem;" id="calc-phys-desc">Ingresa el peso y nivel de actividad actual de tu mascota para calcular su dieta exacta hoy.</p>
+
+
+                    
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="font-size: 1.1rem;">Peso Corporal</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" name="peso" step="0.1" min="0.5" placeholder="Ej. 15.5" required style="flex: 1; padding: 1rem; font-size: 1.1rem;">
+                            <select name="unidad_peso" style="width: 90px; padding-left: 0.5rem; padding-right: 0.5rem; font-size: 1.1rem;">
+                                <option value="kg">kg</option>
+                                <option value="lbs">lbs</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="actividad-group">
+                        <label style="font-size: 1.1rem;">Nivel de Actividad</label>
+                        <select name="actividad" id="actividad-select" style="padding: 1rem; font-size: 1.1rem;">
+                            <option value="mantenimiento">Actividad Media / Mantenimiento</option>
+                            <option value="sedentario">Sedentario / Pérdida de Peso</option>
+                            <option value="alto">Alta Actividad / Ganancia de Peso</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="submit-btn" style="padding: 1.2rem; font-size: 1.2rem; margin-top: 2rem; width: 100%;">Generar Plan Nutricional</button>
+            </form>
+        </div>
+
+        <div class="result-container" id="result-container" style="display:none; margin-top: 2rem;">
+            <div class="summary-card card" style="padding: 2.5rem;">
+                <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem;">Plan Nutricional</h2>
+                
+                <div class="summary-stats-grid">
+                    <div class="stat-box main-stat">
+                        <div class="label">Ración Diaria Total</div>
+                        <div class="value" id="racion-total">0g</div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;" id="racion-calorias">0 kcal</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="label">Comidas al Día</div>
+                        <div class="value" id="racion-comidas" style="font-size: 1.8rem; color: white;">2</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="label">Porción por Comida</div>
+                        <div class="value" id="racion-recomendacion" style="font-size: 1.8rem; color: white;">0g</div>
+                    </div>
+                </div>
+
+                <button class="btn-secondary" id="btn-recalculate" style="margin-top: 2rem; background: white; color: var(--brand-blue); border: none; padding: 1rem 1.5rem; font-size: 1.1rem;">Recalcular Dieta</button>
+            </div>
+
+            <div class="ingredients-grid" id="ingredient-list">
+                <!-- Injected via JS -->
+            </div>
+            
+            <div class="warnings" style="margin-top: 2rem; font-size: 1rem;">
+                <p><strong>⚠️ Atención:</strong> Los huesos carnosos <strong>NUNCA</strong> deben cocinarse (se astillan y son peligrosos). Estos cálculos son una base inicial recomendada.</p>
+                <p id="taurina-warning" style="display:none;"><strong>🐱 Extra Gatos:</strong> Es vital incluir cortes ricos en Taurina (como el corazón) dentro de la porción de carne magra.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= VISTA 4: AGENDA Y CALENDARIO ================= -->
+    <main class="container view-section" id="view-calendar" style="display: none; max-width: 800px; width: 100%;">
+        <button id="btn-close-calendar" class="btn-secondary" style="margin-bottom: 2rem; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white;">
+            <span>◀ Volver al Dashboard</span>
+        </button>
+
+        <div class="card" style="padding: 2.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.8rem; color: var(--brand-green);">Agenda de <span id="calendar-pet-name">Mascota</span></h2>
+                <div style="display: flex; align-items: center; gap: 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 0.5rem;">
+                    <button id="btn-prev-month" style="background:none; border:none; color:white; font-size: 1.5rem; cursor:pointer; padding: 0 0.5rem;">◀</button>
+                    <span id="calendar-month-year" style="font-size: 1.2rem; font-weight: 600; min-width: 120px; text-align: center;">Mayo 2026</span>
+                    <button id="btn-next-month" style="background:none; border:none; color:white; font-size: 1.5rem; cursor:pointer; padding: 0 0.5rem;">▶</button>
+                </div>
+            </div>
+
+            <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center;">
+                <!-- Días de la semana -->
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Lun</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Mar</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Mié</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Jue</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Vie</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Sáb</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; padding-bottom: 1rem;">Dom</div>
+                
+                <!-- Días inyectados por JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para Añadir/Ver Evento -->
+    <div id="event-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 10000; align-items:center; justify-content:center;">
+        <div class="card" style="width: 90%; max-width: 400px; padding: 2rem; transform: scale(0.9); opacity: 0; transition: transform 0.3s, opacity 0.3s;" id="event-modal-content">
+            <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;" id="event-modal-date-title">15 de Mayo</h3>
+            <div id="event-modal-existing" style="margin-bottom: 1.5rem; color: var(--brand-green); font-size: 1.1rem; font-weight: bold; display: none;">
+                <!-- Evento existente -->
+                <div id="event-modal-existing-text"></div>
+                <button type="button" id="btn-delete-event" style="color:#ef4444; background:none; border:none; cursor:pointer; text-decoration:underline; font-size: 0.9rem; padding:0; margin-top: 0.5rem;">Borrar este evento</button>
+            </div>
+            
+            <form id="add-event-form">
+                <div class="form-group">
+                    <label>Añadir Nuevo Evento</label>
+                    <input type="text" id="new-event-title" placeholder="Ej: Vacuna, Paseo al parque..." required style="padding: 1rem; font-size: 1rem; width: 100%;">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn-secondary" id="btn-close-modal" style="flex: 1; padding: 0.8rem; font-size: 1rem; background: rgba(255,255,255,0.1); border: none;">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="flex: 1; padding: 0.8rem; font-size: 1rem;">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= VISTA 5: SUSCRIPCIÓN ================= -->
+    <main class="container view-section" id="view-subscription" style="display: none; max-width: 600px; width: 100%; margin-top: 5vh;">
+        <div class="card" style="padding: 3rem 2rem; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🐾</div>
+            <h2 id="subscription-title" style="font-size: 2rem; margin-bottom: 1rem; color: var(--text-main);">Tu periodo de prueba ha expirado</h2>
+            <p id="subscription-subtitle" style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
+                Esperamos que hayas disfrutado estos 7 días con NutriPaws. Para seguir teniendo acceso al panel médico y mantenerte al día con la agenda de tu peludo, necesitas una suscripción activa.
+            </p>
+            
+            <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+                <h3 style="font-size: 1.4rem; color: var(--brand-green); margin-bottom: 0.5rem;">Suscripción UltraPaws</h3>
+                <p style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;">$6.99 <span style="font-size: 1rem; color: var(--text-muted); font-weight: normal;">/ mes</span></p>
+                <ul style="text-align: left; margin: 1.5rem 0; padding-left: 1.5rem; color: var(--text-muted); line-height: 1.8;">
+                    <li>Dietas ilimitadas personalizadas</li>
+                    <li>Registro médico completo</li>
+                    <li>Agenda interactiva y recordatorios</li>
+                    <li>Análisis de piel con IA</li>
+                </ul>
+                
+                <!-- PayPal Button Container -->
+                <button id="btn-show-paypal" class="btn-primary" style="width: 100%; padding: 1rem; margin-top: 1.5rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; background: linear-gradient(45deg, #10b981, #059669);">Pagar Suscripción</button>
+                <div id="paypal-button-container" style="margin-top: 1rem; display: none;"></div>
+            </div>
+            
+            <button id="btn-back-dashboard-sub" class="btn-secondary" style="display: none; width: 100%; padding: 1rem; margin-bottom: 1rem;">
+                Volver al Dashboard
+            </button>
+            <button id="btn-logout-subscription" class="btn-secondary" style="width: 100%; padding: 1rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">
+                Cerrar Sesión
+            </button>
+            <p style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                ¿Prefieres pagar manual con Binance o Zinli? <a href="https://wa.me/584121287701" target="_blank" style="color: var(--brand-green);">Contáctanos</a>
+            </p>
+        </div>
+    </main>
+
+    <!-- ================= MODAL DE EMERGENCIA SOS ================= -->
+    <div id="modal-emergency-sos" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div style="background: var(--bg-color); width: 90%; max-width: 500px; padding: 2.5rem; border-radius: 16px; border: 2px solid #ef4444; position: relative;">
+            <button id="btn-close-emergency" style="position: absolute; top: 1rem; right: 1.5rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
+            
+            <h2 style="color: #ef4444; text-align: center; margin-bottom: 0.5rem; font-size: 2rem; text-transform: uppercase;">Emergencia</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">¿Qué le sucede a la mascota? Selecciona una opción para primeros auxilios inmediatos.</p>
+            
+            <div id="emergency-options" style="display: flex; flex-direction: column; gap: 1rem;">
+                <button class="emergency-option-btn" data-type="Asfixia o atragantamiento" style="background: rgba(239, 68, 68, 0.15); color: white; border: 1px solid #ef4444; padding: 1.2rem; font-size: 1.1rem; font-weight: bold; border-radius: 12px; cursor: pointer;">Asfixia / Atragantamiento</button>
+                <button class="emergency-option-btn" data-type="Convulsión" style="background: rgba(239, 68, 68, 0.15); color: white; border: 1px solid #ef4444; padding: 1.2rem; font-size: 1.1rem; font-weight: bold; border-radius: 12px; cursor: pointer;">Convulsión</button>
+                <button class="emergency-option-btn" data-type="Sangrado abundante" style="background: rgba(239, 68, 68, 0.15); color: white; border: 1px solid #ef4444; padding: 1.2rem; font-size: 1.1rem; font-weight: bold; border-radius: 12px; cursor: pointer;">Sangrado Abundante</button>
+                <button class="emergency-option-btn" data-type="Intoxicación o envenenamiento" style="background: rgba(239, 68, 68, 0.15); color: white; border: 1px solid #ef4444; padding: 1.2rem; font-size: 1.1rem; font-weight: bold; border-radius: 12px; cursor: pointer;">Intoxicación / Envenenamiento</button>
+                <button id="btn-emergency-other" style="background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 1.2rem; font-size: 1.1rem; border-radius: 12px; cursor: pointer;">Otro (Escribir)</button>
+            </div>
+
+            <div id="emergency-input-container" style="display: none; margin-top: 1rem;">
+                <input type="text" id="emergency-custom-text" placeholder="Ej: Fue picado por una abeja..." style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid #ef4444; background: rgba(0,0,0,0.5); color: white; margin-bottom: 1rem; font-size: 1.1rem;">
+                <button id="btn-send-custom-emergency" style="width: 100%; background: #ef4444; color: white; padding: 1rem; font-size: 1.1rem; font-weight: bold; border-radius: 8px; border: none; cursor: pointer;">Enviar</button>
+            </div>
+            
+            <div id="emergency-loading" style="display: none; text-align: center; padding: 2rem 0;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; border: 3px solid rgba(239, 68, 68, 0.2); border-top-color: #ef4444; animation: spin 1s linear infinite; margin: 0 auto 1rem auto;"></div>
+                <p style="color: #ef4444; font-weight: bold;">Generando instrucciones de supervivencia...</p>
+            </div>
+
+            <div id="emergency-result" style="display: none; margin-top: 2rem; background: rgba(0,0,0,0.5); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #ef4444;">
+                <h3 style="color: #ef4444; margin-bottom: 1rem; text-transform: uppercase;">Acción Inmediata</h3>
+                <div id="emergency-result-text" style="color: white; font-size: 1.1rem; line-height: 1.6;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= FOOTER GLOBAL ================= -->
+    <footer id="main-footer" style="display: none; background-color: var(--bg-color); width: calc(100% + 2rem); margin: 4rem -1rem -2rem -1rem; padding: 4rem 2rem; border-top: 1px solid var(--border-color); flex-direction: column; align-items: center; z-index: 10; position: relative;">
+        <div style="max-width: 800px; text-align: center;">
+            <h4 style="font-size: 2.2rem; color: var(--brand-green); margin-bottom: 1.5rem; font-weight: 800; letter-spacing: -1px;">NutriPaws</h4>
+            
+            <p style="color: var(--text-main); margin-bottom: 2.5rem; font-size: 1.1rem; line-height: 1.6; max-width: 600px; margin-left: auto; margin-right: auto; opacity: 0.9;">
+                Nos importa la salud de tu peludo. NutriPaws está creado por un equipo apasionado que ama a los animales, y nuestra misión es darte las mejores herramientas para que cuides a tu amado compañero.
+            </p>
+            
+            <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 3rem; flex-wrap: wrap;">
+                <a href="#" style="color: var(--brand-green); font-size: 1rem; text-decoration: none; font-weight: bold; border: 2px solid var(--brand-green); padding: 0.5rem 1rem; border-radius: 8px;">Instagram</a>
+                <a href="#" style="color: var(--brand-green); font-size: 1rem; text-decoration: none; font-weight: bold; border: 2px solid var(--brand-green); padding: 0.5rem 1rem; border-radius: 8px;">Twitter / X</a>
+                <a href="#" style="color: var(--brand-green); font-size: 1rem; text-decoration: none; font-weight: bold; border: 2px solid var(--brand-green); padding: 0.5rem 1rem; border-radius: 8px;">Facebook</a>
+            </div>
+            
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                &copy; 2025-2026 NutriPaws. Todos los derechos reservados. | 
+                <a href="privacy.html" style="color: var(--brand-green); text-decoration: none; font-weight: bold;">Políticas de Privacidad</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- ================= BOTTOM NAVIGATION BAR ================= -->
+    <nav class="bottom-bar" id="bottom-nav" style="display: none;">
+        <button class="bottom-nav-item active" onclick="switchTab('tab-inicio')">
+            <img src="assets/icons/home-page.png" alt="Inicio">
+            <span>Inicio</span>
+        </button>
+        <button class="bottom-nav-item" onclick="switchTab('tab-clinica')">
+            <img src="assets/icons/veterinary.png" alt="Clínica">
+            <span>Clínica</span>
+        </button>
+        <button class="bottom-nav-item" onclick="switchTab('tab-dietas')">
+            <img src="assets/icons/fish.png" alt="Dietas">
+            <span>Dietas</span>
+        </button>
+        <button class="bottom-nav-item" onclick="switchTab('tab-perfil')">
+            <img src="assets/icons/user.png" alt="Perfil">
+            <span>Perfil</span>
+        </button>
+    </nav>
+
+    <!-- SDK de PayPal (Live) -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AcYQgTvYLjNELcrzArrXrwDYtq9lCYixoyQyKz-NMwlbt9pAhJm5HyfOIWhk3l3qa_LDGLW-SZEo8uWI&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
+
+    <script type="module" src="firebase-auth.js?v=33"></script>
+    <script src="app.js?v=33"></script>
+</body>
+</html>

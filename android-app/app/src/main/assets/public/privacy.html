@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Políticas de Privacidad - NutriPaws</title>
+    
+    <meta name="description" content="Lee nuestras políticas de privacidad para entender cómo NutriPaws protege tus datos y los de tu mascota de forma segura.">
+    <meta name="robots" content="noindex, follow"> <!-- Por lo general las páginas de privacidad no necesitan ser indexadas con alta prioridad, pero sí seguidas -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .privacy-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-top: 2rem;
+            margin-bottom: 3rem;
+            backdrop-filter: var(--backdrop-blur, none);
+        }
+        .privacy-container h1 {
+            color: var(--brand-green);
+            margin-bottom: 1.5rem;
+            font-size: 2.2rem;
+        }
+        .privacy-container h2 {
+            color: var(--text-main);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+        .privacy-container p, .privacy-container li {
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1rem;
+            font-size: 1.05rem;
+        }
+        .privacy-container ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: var(--brand-blue);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.8rem 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        [data-theme="dark"] .back-link { color: white; }
+        .back-link:hover {
+            border-color: var(--brand-green);
+            color: var(--brand-green);
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+
+    <div id="cursor-glow"></div>
+    <div id="cursor-dot"></div>
+
+    <header>
+        <div class="logo">
+            <span class="logo-nutri">Nutri</span><span class="logo-paws">Paws</span>
+        </div>
+        <div class="subtitle">Asistente Inteligente para Mascotas</div>
+    </header>
+
+    <div class="privacy-container">
+        <h1>Políticas de Privacidad</h1>
+        <p>Última actualización: 22 de Mayo de 2026</p>
+
+        <h2>1. Información que recopilamos</h2>
+        <p>En NutriPaws, nos tomamos muy en serio tu privacidad y la de tus mascotas. Recopilamos la siguiente información:</p>
+        <ul>
+            <li><strong>Datos de Cuenta:</strong> Tu dirección de correo electrónico, nombre de usuario e identificador único proporcionado por Google o Apple a través de Firebase Authentication.</li>
+            <li><strong>Datos de Mascotas:</strong> Información sobre tus mascotas (nombre, especie, raza, peso, dieta, fechas de nacimiento), almacenada de forma segura en Firebase Firestore.</li>
+            <li><strong>Registros Médicos:</strong> Textos, fotografías y documentos PDF que subes para su análisis.</li>
+        </ul>
+
+        <h2>2. Uso de Inteligencia Artificial (IA)</h2>
+        <p>NutriPaws utiliza modelos de inteligencia artificial avanzados (como Gemini Vision) para procesar los registros médicos y fotografías (SkinGuard) que proporcionas.</p>
+        <ul>
+            <li>Las imágenes y documentos son enviados temporalmente a la API de IA exclusivamente para extraer diagnósticos presuntivos y eventos médicos.</li>
+            <li><strong>No utilizamos</strong> los datos de tus mascotas ni tus imágenes para entrenar modelos de IA públicos.</li>
+            <li>Los diagnósticos de la IA (SkinGuard) son predictivos y probabilísticos. <strong>Nunca</strong> sustituyen el consejo, diagnóstico o tratamiento de un médico veterinario certificado.</li>
+        </ul>
+
+        <h2>3. Almacenamiento y Seguridad</h2>
+        <p>Tus datos son almacenados en infraestructuras de grado empresarial (Google Firebase / Firestore). Empleamos reglas de seguridad estrictas que garantizan que <strong>solo tú</strong> puedas acceder, modificar o eliminar los datos asociados a tu cuenta.</p>
+
+        <h2>4. Compartición de Datos</h2>
+        <p>No vendemos, alquilamos ni compartimos tu información personal ni la de tus mascotas con terceros para fines publicitarios. Tus datos solo se comparten de forma técnica y automatizada con los proveedores de infraestructura (Vercel, Firebase) y servicios de IA (Google) necesarios para el funcionamiento de la aplicación.</p>
+
+        <h2>5. Tus Derechos</h2>
+        <p>Tienes el derecho en cualquier momento a:</p>
+        <ul>
+            <li>Acceder a todos los datos que tenemos sobre ti.</li>
+            <li>Rectificar información incorrecta.</li>
+            <li>Solicitar la eliminación completa e irreversible de tu cuenta y todos los perfiles de tus mascotas.</li>
+        </ul>
+
+        <h2>6. Contacto</h2>
+        <p>Si tienes alguna pregunta sobre esta política de privacidad, puedes contactarnos en: <strong>privacidad@nutripaws.app</strong></p>
+
+        <a href="index.html" class="back-link">← Volver a la App</a>
+    </div>
+
+    <script>
+        // Lógica simple para el cursor en esta página
+        const cursorGlow = document.getElementById('cursor-glow');
+        const cursorDot = document.getElementById('cursor-dot');
+
+        document.addEventListener('mousemove', (e) => {
+            cursorDot.style.left = e.clientX + 'px';
+            cursorDot.style.top = e.clientY + 'px';
+            cursorGlow.style.left = e.clientX + 'px';
+            cursorGlow.style.top = e.clientY + 'px';
+        });
+
+        const clickables = document.querySelectorAll('a, button');
+        clickables.forEach(el => {
+            el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+            el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+        });
+    </script>
+</body>
+</html>

@@ -1,4 +1,6 @@
 import os
+import time
+from functools import wraps
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -8,13 +10,66 @@ import io
 import re
 import json
 
+import firebase_admin
+from firebase_admin import auth as firebase_auth
+
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
+# Inicializar Firebase Admin SDK para verificación de tokens
+if not firebase_admin._apps:
+    firebase_admin.initialize_app()
+
 app = Flask(__name__)
 # Permitir CORS desde cualquier origen para Vercel
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# Rate Limiting simple en memoria
+# Formato: { "ip": [timestamp1, timestamp2, ...] }
+RATE_LIMIT_STORE = {}
+RATE_LIMIT_MAX_REQUESTS = 10 # Máximo 10 requests
+RATE_LIMIT_WINDOW_SEC = 60   # por minuto
+
+def check_rate_limit(ip):
+    now = time.time()
+    if ip not in RATE_LIMIT_STORE:
+        RATE_LIMIT_STORE[ip] = []
+    
+    # Filtrar timestamps viejos
+    RATE_LIMIT_STORE[ip] = [ts for ts in RATE_LIMIT_STORE[ip] if now - ts < RATE_LIMIT_WINDOW_SEC]
+    
+    if len(RATE_LIMIT_STORE[ip]) >= RATE_LIMIT_MAX_REQUESTS:
+        return False
+    
+    RATE_LIMIT_STORE[ip].append(now)
+    return True
+
+def require_auth(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # 1. Rate Limiting Check
+        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if not check_rate_limit(client_ip):
+            return jsonify({"error": "Demasiadas solicitudes. Por favor, espera."}), 429
+            
+        # 2. Token Verification Check
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({"error": "Token de autenticación faltante o inválido"}), 401
+        
+        id_token = auth_header.split('Bearer ')[1]
+        try:
+            # Validar el token usando Firebase Admin
+            decoded_token = firebase_auth.verify_id_token(id_token)
+            request.user = decoded_token
+        except Exception as e:
+            print("Error validando token:", e)
+            return jsonify({"error": "No autorizado", "details": str(e)}), 401
+            
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -25,6 +80,7 @@ def login():
 import datetime
 
 @app.route('/api/process_medical_record', methods=['POST'])
+@require_auth
 def process_record():
     data = request.json
     text = data.get('text', '')
@@ -76,6 +132,7 @@ Solo llena 'events' si hay citas o cosas a futuro. Solo llena 'history_notes' si
         return jsonify({"error": f"Error: {error_msg}"}), 503
 
 @app.route('/api/analyze_document', methods=['POST'])
+@require_auth
 def analyze_document():
     if 'document' not in request.files:
         return jsonify({"error": "No document provided"}), 400
@@ -130,6 +187,7 @@ Solo llena 'events' si hay citas o cosas a futuro. Solo llena 'history_notes' ex
         return jsonify({"error": f"Error: {error_msg}"}), 503
 
 @app.route('/api/skinguard/analyze', methods=['POST'])
+@require_auth
 def skinguard_analyze():
     if 'image' not in request.files:
         return jsonify({"error": "No image provided"}), 400
@@ -176,6 +234,7 @@ Las opciones para urgencia son: BAJA, MEDIA, ALTA."""
         }), 503
 
 @app.route('/api/emergency_sos', methods=['POST'])
+@require_auth
 def emergency_sos():
     data = request.json
     emergency_type = data.get('emergency_type', '')

@@ -1,40 +1,5 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
-    // --- SISTEMA DE TOASTS ---
-    window.showToast = function(msg, type = 'info') {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            document.body.appendChild(container);
-        }
-        const toast = document.createElement('div');
-        toast.className = `custom-toast ${type}`;
-        let icon = 'âœ…';
-        if(type === 'error') icon = 'âŒ';
-        if(type === 'warning') icon = 'âš ï¸';
-        if(type === 'info') icon = 'â„¹ï¸';
-        const messageStr = (typeof msg === 'string') ? msg : (msg && msg.message ? msg.message : String(msg));
-        toast.innerHTML = `<span style="font-size: 1.2rem;">${icon}</span><span class="custom-toast-message">${messageStr.replace(/\n/g, '<br>')}</span>`;
-        container.appendChild(toast);
-        setTimeout(() => {
-            toast.classList.add('hide');
-            setTimeout(() => toast.remove(), 300);
-        }, 4000);
-    };
-
-    window.alert = function(msg) {
-        let type = 'info';
-        let msgLower = String(msg).toLowerCase();
-        if(msgLower.includes('error') || msgLower.includes('fallÃ³') || msgLower.includes('incorrecto') || msgLower.includes('invÃ¡lido')) {
-            type = 'error';
-        } else if (msgLower.includes('Ã©xito') || msgLower.includes('aprobada') || msgLower.includes('procesado')) {
-            type = 'success';
-        }
-        window.showToast(msg, type);
-    };
-    // -------------------------
-
-    // --- LÃ“GICA DE VISTAS (SPA) ---
+document.addEventListener('DOMContentLoaded', () => {
+    // --- LÓGICA DE VISTAS (SPA) ---
     const viewLogin = document.getElementById('view-login');
     const viewDashboard = document.getElementById('view-dashboard');
     const viewCreatePet = document.getElementById('view-create-pet');
@@ -110,7 +75,7 @@
     }
 
     async function saveData() {
-        // FunciÃ³n general que guarda la mascota activa actual si hubo algÃºn cambio
+        // Función general que guarda la mascota activa actual si hubo algún cambio
         if (activePetIndex !== -1 && pets[activePetIndex]) {
             await savePetToFirestore(pets[activePetIndex]);
         }
@@ -152,13 +117,13 @@
         });
     }
 
-    // Escuchar el estado de Firebase Auth para persistencia automÃ¡tica
-    // Utilizamos setTimeout leve para asegurar que firebaseAuth se inyectÃ³
+    // Escuchar el estado de Firebase Auth para persistencia automática
+    // Utilizamos setTimeout leve para asegurar que firebaseAuth se inyectó
     setTimeout(() => {
         if (window.firebaseAuth) {
             window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
                 if (user) {
-                    // Forzar verificaciÃ³n de correo para usuarios con contraseÃ±a
+                    // Forzar verificación de correo para usuarios con contraseña
                     if (user.providerData && user.providerData.some(p => p.providerId === 'password') && !user.emailVerified) {
                         window.firebaseAuth.signOut(window.firebaseAuth.auth);
                         return;
@@ -168,7 +133,7 @@
                     const displayName = user.displayName || user.email.split('@')[0];
                     document.getElementById('user-name-display').innerText = displayName;
                     
-                    // LÃ³gica de SuscripciÃ³n / Trial
+                    // Lógica de Suscripción / Trial
                     const userDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, 'users', currentUser.uid);
                     try {
                         let userDoc = await window.firebaseAuth.getDoc(userDocRef);
@@ -178,7 +143,7 @@
                             isNewUser = true;
                             // Crear documento por primera vez
                             const now = Date.now();
-                            const trialEndsAt = now + (7 * 24 * 60 * 60 * 1000); // 7 dÃ­as
+                            const trialEndsAt = now + (7 * 24 * 60 * 60 * 1000); // 7 días
                             await window.firebaseAuth.setDoc(userDocRef, {
                                 createdAt: now,
                                 trialEndsAt: trialEndsAt,
@@ -210,12 +175,12 @@
                             showView(viewDashboard);
                             await loadPetsFromFirestore();
                         } else if (now > userData.trialEndsAt) {
-                            // Trial expirado y no tiene suscripciÃ³n activa
+                            // Trial expirado y no tiene suscripción activa
                             if(btnUpgradeEarly) btnUpgradeEarly.style.display = 'none';
                             if(trialDaysLeft) trialDaysLeft.style.display = 'none';
                             
                             document.getElementById('subscription-title').innerText = "Tu periodo de prueba ha expirado";
-                            document.getElementById('subscription-subtitle').innerText = "Esperamos que hayas disfrutado estos 7 dÃ­as con NutriPaws. Para seguir teniendo acceso al panel mÃ©dico y mantenerte al dÃ­a con la agenda de tu peludo, necesitas una suscripciÃ³n activa.";
+                            document.getElementById('subscription-subtitle').innerText = "Esperamos que hayas disfrutado estos 7 días con NutriPaws. Para seguir teniendo acceso al panel médico y mantenerte al día con la agenda de tu peludo, necesitas una suscripción activa.";
                             document.getElementById('btn-back-dashboard-sub').style.display = 'none';
                             
                             showView(document.getElementById('view-subscription'));
@@ -224,15 +189,15 @@
                             // Trial activo
                             const daysLeft = Math.ceil((userData.trialEndsAt - now) / (1000 * 60 * 60 * 24));
                             if(trialDaysLeft) {
-                                trialDaysLeft.innerText = `${daysLeft} dÃ­as restantes`;
+                                trialDaysLeft.innerText = `${daysLeft} días restantes`;
                                 trialDaysLeft.style.display = 'block';
                             }
                             
                             if(btnUpgradeEarly) {
                                 btnUpgradeEarly.style.display = 'block';
                                 btnUpgradeEarly.onclick = () => {
-                                    document.getElementById('subscription-title').innerText = "Â¡Hazte Premium Hoy!";
-                                    document.getElementById('subscription-subtitle').innerText = "AdelÃ¡ntate y asegura el acceso ininterrumpido a todas las funciones premium para el cuidado de tu mascota.";
+                                    document.getElementById('subscription-title').innerText = "¡Hazte Premium Hoy!";
+                                    document.getElementById('subscription-subtitle').innerText = "Adelántate y asegura el acceso ininterrumpido a todas las funciones premium para el cuidado de tu mascota.";
                                     document.getElementById('btn-back-dashboard-sub').style.display = 'block';
                                     
                                     showView(document.getElementById('view-subscription'));
@@ -242,10 +207,10 @@
                             
                             if (isNewUser) {
                                 // Pantalla de Onboarding
-                                document.getElementById('subscription-title').innerText = "Â¡Bienvenido a NutriPaws!";
-                                document.getElementById('subscription-subtitle').innerText = "Adquiere UltraPaws ahora mismo o comienza tu prueba gratuita de 7 dÃ­as con acceso total.";
+                                document.getElementById('subscription-title').innerText = "¡Bienvenido a NutriPaws!";
+                                document.getElementById('subscription-subtitle').innerText = "Adquiere UltraPaws ahora mismo o comienza tu prueba gratuita de 7 días con acceso total.";
                                 const backBtn = document.getElementById('btn-back-dashboard-sub');
-                                backBtn.innerText = "Continuar con prueba gratuita (7 DÃ­as)";
+                                backBtn.innerText = "Continuar con prueba gratuita (7 Días)";
                                 backBtn.style.display = 'block';
                                 
                                 showView(document.getElementById('view-subscription'));
@@ -256,7 +221,7 @@
                             }
                         }
                     } catch (error) {
-                        console.error("Error validando suscripciÃ³n:", error);
+                        console.error("Error validando suscripción:", error);
                         // Fallback de seguridad, enviarlo al dashboard
                         showView(viewDashboard);
                         await loadPetsFromFirestore();
@@ -273,7 +238,7 @@
         }
     }, 50);
     
-    // MÃºltiples puntitos verdes que persiguen el cursor
+    // Múltiples puntitos verdes que persiguen el cursor
     const numDots = 5;
     const dots = [];
     for (let i = 0; i < numDots; i++) {
@@ -281,11 +246,11 @@
         dot.className = 'cursor-trail-dot';
         // Reducimos la opacidad en cada punto para un efecto de estela
         dot.style.opacity = 1 - (i * 0.15);
-        // Hacemos que cada punto sea un poco mÃ¡s pequeÃ±o
+        // Hacemos que cada punto sea un poco más pequeño
         const size = 6 - i;
         dot.style.width = size + 'px';
         dot.style.height = size + 'px';
-        // AÃ±adimos un delay diferente a la transiciÃ³n de cada punto
+        // Añadimos un delay diferente a la transición de cada punto
         dot.style.transition = `left ${0.05 + i * 0.05}s linear, top ${0.05 + i * 0.05}s linear, transform 0.1s ease`;
         document.body.appendChild(dot);
         dots.push(dot);
@@ -298,14 +263,14 @@
         });
     });
 
-    // AÃ±adir clase al body cuando se hace hover sobre elementos clickeables
+    // Añadir clase al body cuando se hace hover sobre elementos clickeables
     const clickableElements = document.querySelectorAll('button, a, select, input[type="file"], .card-content');
     clickableElements.forEach(el => {
         el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
         el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
     });
     
-    // Y observar el DOM para nuevos elementos clickeables (como los botones que se crean dinÃ¡micamente)
+    // Y observar el DOM para nuevos elementos clickeables (como los botones que se crean dinámicamente)
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.addedNodes.length) {
@@ -333,7 +298,7 @@
         if (view) {
             view.style.display = 'block';
             
-            // Mostrar u ocultar barra de navegaciÃ³n inferior
+            // Mostrar u ocultar barra de navegación inferior
             const bottomNav = document.getElementById('bottom-nav');
             if (bottomNav) {
                 if (view === viewDashboard) {
@@ -364,7 +329,7 @@
 
     // Edit Name
     document.getElementById('edit-name-btn').addEventListener('click', () => {
-        const newName = prompt("Â¿CÃ³mo te gustarÃ­a que te llamemos?");
+        const newName = prompt("¿Cómo te gustaría que te llamemos?");
         if(newName && newName.trim() !== "") {
             document.getElementById('user-name-display').innerText = newName.trim();
         }
@@ -432,7 +397,7 @@
         document.getElementById('login-form').querySelector('button[type="submit"]').innerText = 'Cargando...';
     };
     const hideLoadingLogin = () => {
-        document.getElementById('login-form').querySelector('button[type="submit"]').innerText = 'Iniciar SesiÃ³n';
+        document.getElementById('login-form').querySelector('button[type="submit"]').innerText = 'Iniciar Sesión';
     };
 
     // Google Login
@@ -444,7 +409,7 @@
             showView(viewDashboard);
         } catch (error) {
             console.error("Error Google Login:", error);
-            alert("Error al iniciar sesiÃ³n con Google: " + error.message);
+            alert("Error al iniciar sesión con Google: " + error.message);
         }
     });
 
@@ -465,16 +430,16 @@
         
         if (isRegisterMode) {
             title.innerText = "Crea tu Cuenta";
-            subtitle.innerText = "Ãšnete a NutriPaws y cuida a tu mascota";
+            subtitle.innerText = "Únete a NutriPaws y cuida a tu mascota";
             btnSubmit.innerText = "Registrarse";
-            toggleLink.innerText = "Â¿Ya tienes cuenta? Inicia SesiÃ³n";
+            toggleLink.innerText = "¿Ya tienes cuenta? Inicia Sesión";
             confirmGroup.style.display = 'block';
             confirmInput.required = true;
         } else {
             title.innerText = "Bienvenido a NutriPaws";
-            subtitle.innerText = "Inicia sesiÃ³n para gestionar el perfil de tu mascota";
-            btnSubmit.innerText = "Iniciar SesiÃ³n";
-            toggleLink.innerText = "Â¿No tienes cuenta? RegÃ­strate";
+            subtitle.innerText = "Inicia sesión para gestionar el perfil de tu mascota";
+            btnSubmit.innerText = "Iniciar Sesión";
+            toggleLink.innerText = "¿No tienes cuenta? Regístrate";
             confirmGroup.style.display = 'none';
             confirmInput.required = false;
         }
@@ -482,7 +447,7 @@
 
     document.getElementById('help-resend-email').addEventListener('click', (e) => {
         e.preventDefault();
-        alert("ðŸ’¡ Para reenviar el correo de verificaciÃ³n:\n\n1. AsegÃºrate de estar en la opciÃ³n 'Iniciar SesiÃ³n'.\n2. Ingresa tu correo y contraseÃ±a.\n3. Haz clic en 'Iniciar SesiÃ³n'.\n\nEl sistema detectarÃ¡ que tu cuenta no estÃ¡ verificada y te darÃ¡ la opciÃ³n de enviarte un nuevo enlace automÃ¡ticamente.");
+        alert("💡 Para reenviar el correo de verificación:\n\n1. Asegúrate de estar en la opción 'Iniciar Sesión'.\n2. Ingresa tu correo y contraseña.\n3. Haz clic en 'Iniciar Sesión'.\n\nEl sistema detectará que tu cuenta no está verificada y te dará la opción de enviarte un nuevo enlace automáticamente.");
     });
 
     // Login / Register Form Handler
@@ -495,7 +460,7 @@
         const confirmPassword = document.getElementById('login-password-confirm').value;
         
         if (isRegisterMode && password !== confirmPassword) {
-            return alert("Las contraseÃ±as no coinciden. IntÃ©ntalo de nuevo.");
+            return alert("Las contraseñas no coinciden. Inténtalo de nuevo.");
         }
 
         const btnSubmit = document.getElementById('btn-submit-email');
@@ -510,7 +475,7 @@
                 // Modo Registro
                 result = await window.firebaseAuth.createUserWithEmailAndPassword(window.firebaseAuth.auth, email, password);
                 
-                // Configurar redirecciÃ³n para el correo
+                // Configurar redirección para el correo
                 const actionCodeSettings = {
                     url: window.location.origin, // Redirigir a la app tras verificar
                     handleCodeInApp: false
@@ -520,18 +485,18 @@
                     await window.firebaseAuth.sendEmailVerification(result.user, actionCodeSettings);
                 } catch (e) {
                     console.error("No se pudo enviar el correo con actionCodeSettings:", e);
-                    // Si falla por dominio no autorizado, enviar sin settings (caerÃ¡ en fallback default)
+                    // Si falla por dominio no autorizado, enviar sin settings (caerá en fallback default)
                     await window.firebaseAuth.sendEmailVerification(result.user);
                 }
                 
-                await window.firebaseAuth.signOut(window.firebaseAuth.auth); // Cerrar sesiÃ³n para forzar la validaciÃ³n
+                await window.firebaseAuth.signOut(window.firebaseAuth.auth); // Cerrar sesión para forzar la validación
                 
-                alert("Â¡Cuenta creada exitosamente!\n\nTe hemos enviado un correo de confirmaciÃ³n. Por favor revisa tu bandeja de entrada (y la carpeta de spam) para verificar tu cuenta antes de iniciar sesiÃ³n.");
+                alert("¡Cuenta creada exitosamente!\n\nTe hemos enviado un correo de confirmación. Por favor revisa tu bandeja de entrada (y la carpeta de spam) para verificar tu cuenta antes de iniciar sesión.");
                 
                 // Cambiar a modo login
                 document.getElementById('toggle-auth-mode').click(); 
                 document.getElementById('login-form').reset();
-                return; // Evita que siga la ejecuciÃ³n y abra el dashboard
+                return; // Evita que siga la ejecución y abra el dashboard
             } else {
                 // Modo Login
                 result = await window.firebaseAuth.signInWithEmailAndPassword(window.firebaseAuth.auth, email, password);
@@ -544,9 +509,9 @@
                     
                     if (now - lastSent < cooldown) {
                         const remaining = Math.ceil((cooldown - (now - lastSent)) / 1000);
-                        alert(`Tu correo electrÃ³nico aÃºn no ha sido verificado.\n\nDebes esperar ${remaining} segundos antes de poder solicitar otro correo de verificaciÃ³n.`);
+                        alert(`Tu correo electrónico aún no ha sido verificado.\n\nDebes esperar ${remaining} segundos antes de poder solicitar otro correo de verificación.`);
                     } else {
-                        if (confirm("Tu correo electrÃ³nico aÃºn no ha sido verificado.\n\nÂ¿Deseas que te enviemos un NUEVO enlace de verificaciÃ³n a tu correo?")) {
+                        if (confirm("Tu correo electrónico aún no ha sido verificado.\n\n¿Deseas que te enviemos un NUEVO enlace de verificación a tu correo?")) {
                             try {
                                 const actionCodeSettings = {
                                     url: window.location.origin,
@@ -554,19 +519,19 @@
                                 };
                                 await window.firebaseAuth.sendEmailVerification(result.user, actionCodeSettings);
                                 localStorage.setItem('lastVerificationSent_' + result.user.uid, now.toString());
-                                alert("Â¡Nuevo correo enviado! Por favor revisa tu bandeja de entrada o tu carpeta de spam.");
+                                alert("¡Nuevo correo enviado! Por favor revisa tu bandeja de entrada o tu carpeta de spam.");
                             } catch (e) {
                                 console.error("Error al reenviar correo con settings:", e);
                                 if (e.code === 'auth/too-many-requests') {
-                                    alert("Has solicitado demasiados correos de verificaciÃ³n. Por seguridad, Firebase ha bloqueado temporalmente los envÃ­os a esta cuenta. Por favor, intenta de nuevo mÃ¡s tarde.");
+                                    alert("Has solicitado demasiados correos de verificación. Por seguridad, Firebase ha bloqueado temporalmente los envíos a esta cuenta. Por favor, intenta de nuevo más tarde.");
                                 } else {
                                     try {
                                         // Fallback sin actionCodeSettings
                                         await window.firebaseAuth.sendEmailVerification(result.user);
                                         localStorage.setItem('lastVerificationSent_' + result.user.uid, now.toString());
-                                        alert("Â¡Nuevo correo enviado (modo seguro)! Por favor revisa tu bandeja de entrada o spam.");
+                                        alert("¡Nuevo correo enviado (modo seguro)! Por favor revisa tu bandeja de entrada o spam.");
                                     } catch (fallbackErr) {
-                                        console.error("Error crÃ­tico de auth:", fallbackErr);
+                                        console.error("Error crítico de auth:", fallbackErr);
                                         alert("Hubo un error interno de Firebase al intentar enviar el correo: " + fallbackErr.message);
                                     }
                                 }
@@ -579,20 +544,20 @@
                 }
             }
             
-            // Si llega aquÃ­, es un login exitoso y verificado
+            // Si llega aquí, es un login exitoso y verificado
             document.getElementById('user-name-display').innerText = result.user.displayName || email.split('@')[0];
             showView(viewDashboard);
             document.getElementById('login-form').reset();
         } catch(error) {
             console.error("Auth Error:", error);
             // Traducir algunos errores comunes de Firebase
-            let errorMsg = "OcurriÃ³ un error. Verifica tus datos.";
-            if (error.code === 'auth/email-already-in-use') errorMsg = "Este correo ya estÃ¡ registrado. Por favor, inicia sesiÃ³n.";
-            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') errorMsg = "Correo o contraseÃ±a incorrectos.";
-            if (error.code === 'auth/weak-password') errorMsg = "La contraseÃ±a es muy dÃ©bil. Usa al menos 6 caracteres.";
+            let errorMsg = "Ocurrió un error. Verifica tus datos.";
+            if (error.code === 'auth/email-already-in-use') errorMsg = "Este correo ya está registrado. Por favor, inicia sesión.";
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') errorMsg = "Correo o contraseña incorrectos.";
+            if (error.code === 'auth/weak-password') errorMsg = "La contraseña es muy débil. Usa al menos 6 caracteres.";
             alert(errorMsg);
         } finally {
-            btnSubmit.innerText = isRegisterMode ? "Registrarse" : "Iniciar SesiÃ³n";
+            btnSubmit.innerText = isRegisterMode ? "Registrarse" : "Iniciar Sesión";
             btnSubmit.disabled = false;
         }
     });
@@ -604,7 +569,7 @@
 
     // La apertura de calculadora ahora se hace desde renderPets()
 
-    // Calculadora RÃ¡pida (Invitado)
+    // Calculadora Rápida (Invitado)
     document.getElementById('btn-quick-calc').addEventListener('click', () => {
         activePetIndex = -1;
         document.getElementById('calc-guest-fields').style.display = 'block';
@@ -617,7 +582,7 @@
         showView(viewDashboard);
     });
     
-    // Helpers de visualizaciÃ³n de eventos
+    // Helpers de visualización de eventos
     function renderMedicalEvent(evento) {
         const calendar = document.getElementById('calendar-events');
         if(calendar.innerHTML.includes('No hay citas')) calendar.innerHTML = '';
@@ -633,7 +598,7 @@
                     ${desc ? `<div style="font-size: 0.95rem; color: var(--text-muted); margin-top: 4px;">${desc}</div>` : ''}
                 </div>
                 <div style="text-align: right;">
-                    <span style="font-size: 0.85rem; background: rgba(0,0,0,0.5); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: bold;">ðŸ“… ${scheduled}</span>
+                    <span style="font-size: 0.85rem; background: rgba(0,0,0,0.5); padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: bold;">📅 ${scheduled}</span>
                 </div>
             </div>
         `;
@@ -666,7 +631,7 @@
                 renderMedicalEvent(evt);
             });
             await savePetToFirestore(pet); // Guardado en DB
-            renderPets(); // Actualizar las tarjetas para mostrar el nuevo PrÃ³ximo Evento
+            renderPets(); // Actualizar las tarjetas para mostrar el nuevo Próximo Evento
         }
     }
 
@@ -685,7 +650,7 @@
         }
     }
 
-    // Procesar texto mÃ©dico
+    // Procesar texto médico
     document.getElementById('medical-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const text = document.getElementById('medical-notes').value;
@@ -697,13 +662,9 @@
         btn.disabled = true;
         
         try {
-            const idToken = window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
             const res = await fetch('/api/process_medical_record', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + idToken
-                },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({text: text})
             });
             
@@ -729,7 +690,7 @@
         }
     });
 
-    // Subir y procesar documento mÃ©dico
+    // Subir y procesar documento médico
     const btnUploadMed = document.getElementById('btn-upload-medical-doc');
     const inputMedDoc = document.getElementById('medical-doc-input');
 
@@ -750,12 +711,8 @@
             formData.append('document', file);
 
             try {
-                const idToken = window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
                 const res = await fetch('/api/analyze_document', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + idToken
-                    },
                     body: formData
                 });
                 
@@ -771,7 +728,7 @@
                 await processMedicalEvents(eventosArr);
                 await processMedicalHistory(historyArr);
                 
-                alert("Â¡Documento procesado! Eventos agregados a la agenda e historial.");
+                alert("¡Documento procesado! Eventos agregados a la agenda e historial.");
             } catch(err) {
                 console.error(err);
                 alert(err.message || "Error al procesar el documento con la IA.");
@@ -802,13 +759,9 @@
             formData.append('image', file);
 
             try {
-                const idToken = window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
                 // Hacer POST al backend
                 const res = await fetch('/api/skinguard/analyze', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + idToken
-                    },
                     body: formData
                 });
                 
@@ -842,7 +795,7 @@
 
                     resultsDiv.style.display = 'block';
 
-                    // Guardar historial dermatolÃ³gico
+                    // Guardar historial dermatológico
                     const skinSelect = document.getElementById('skin-pet-select');
                     const selectedIdx = skinSelect ? parseInt(skinSelect.value) : activePetIndex;
                     
@@ -861,7 +814,7 @@
                 }
             } catch (err) {
                 console.error("Error al contactar IA:", err);
-                alert("OcurriÃ³ un error de red al contactar con la API de Gemini.");
+                alert("Ocurrió un error de red al contactar con la API de Gemini.");
             } finally {
                 loadingUI.style.display = 'none';
                 uploadContent.style.display = 'block';
@@ -870,26 +823,962 @@
         });
     }
 
-    // --- FIN LÃ“GICA DE VISTAS ---
+    // --- FIN LÓGICA DE VISTAS ---
 
     const themeBtnMenu = document.getElementById('theme-btn-menu');
     const htmlObj = document.documentElement;
     let isDark = true;
-    themeBtnMenu.innerText = 'â˜€ï¸ Cambiar Tema';
+    themeBtnMenu.innerText = '☀️ Cambiar Tema';
     
     themeBtnMenu.addEventListener('click', () => {
         isDark = !isDark;
         if(isDark) {
             htmlObj.setAttribute('data-theme', 'dark');
-            themeBtnMenu.innerText = 'â˜€ï¸ Cambiar Tema';
+            themeBtnMenu.innerText = '☀️ Cambiar Tema';
         } else {
             htmlObj.setAttribute('data-theme', 'light');
-            themeBtnMenu.innerText = 'ðŸŒ™ Cambiar Tema';
+            themeBtnMenu.innerText = '🌙 Cambiar Tema';
         }
         dropdownMenu.style.display = 'none';
     });
 
-    const dbRazas = window.dbRazas;
+    const dbRazas = {
+    "perros": [
+        {
+            "id": "criollo",
+            "name": "Criollo / Mestizo"
+        },
+        {
+            "id": "affenpinscher",
+            "name": "Affenpinscher"
+        },
+        {
+            "id": "african-wild",
+            "name": "Wild African"
+        },
+        {
+            "id": "airedale",
+            "name": "Airedale"
+        },
+        {
+            "id": "akita",
+            "name": "Akita"
+        },
+        {
+            "id": "appenzeller",
+            "name": "Appenzeller"
+        },
+        {
+            "id": "australian-kelpie",
+            "name": "Kelpie Australian"
+        },
+        {
+            "id": "australian-shepherd",
+            "name": "Shepherd Australian"
+        },
+        {
+            "id": "bakharwal-indian",
+            "name": "Indian Bakharwal"
+        },
+        {
+            "id": "basenji",
+            "name": "Basenji"
+        },
+        {
+            "id": "beagle",
+            "name": "Beagle"
+        },
+        {
+            "id": "bluetick",
+            "name": "Bluetick"
+        },
+        {
+            "id": "borzoi",
+            "name": "Borzoi"
+        },
+        {
+            "id": "bouvier",
+            "name": "Bouvier"
+        },
+        {
+            "id": "boxer",
+            "name": "Boxer"
+        },
+        {
+            "id": "brabancon",
+            "name": "Brabancon"
+        },
+        {
+            "id": "briard",
+            "name": "Briard"
+        },
+        {
+            "id": "buhund-norwegian",
+            "name": "Norwegian Buhund"
+        },
+        {
+            "id": "bulldog-boston",
+            "name": "Boston Bulldog"
+        },
+        {
+            "id": "bulldog-english",
+            "name": "English Bulldog"
+        },
+        {
+            "id": "bulldog-french",
+            "name": "French Bulldog"
+        },
+        {
+            "id": "bullterrier-staffordshire",
+            "name": "Staffordshire Bullterrier"
+        },
+        {
+            "id": "cattledog-australian",
+            "name": "Australian Cattledog"
+        },
+        {
+            "id": "cavapoo",
+            "name": "Cavapoo"
+        },
+        {
+            "id": "chihuahua",
+            "name": "Chihuahua"
+        },
+        {
+            "id": "chippiparai-indian",
+            "name": "Indian Chippiparai"
+        },
+        {
+            "id": "chow",
+            "name": "Chow"
+        },
+        {
+            "id": "clumber",
+            "name": "Clumber"
+        },
+        {
+            "id": "cockapoo",
+            "name": "Cockapoo"
+        },
+        {
+            "id": "collie-border",
+            "name": "Border Collie"
+        },
+        {
+            "id": "coonhound",
+            "name": "Coonhound"
+        },
+        {
+            "id": "corgi-cardigan",
+            "name": "Cardigan Corgi"
+        },
+        {
+            "id": "cotondetulear",
+            "name": "Cotondetulear"
+        },
+        {
+            "id": "dachshund",
+            "name": "Dachshund"
+        },
+        {
+            "id": "dalmatian",
+            "name": "Dalmatian"
+        },
+        {
+            "id": "dane-great",
+            "name": "Great Dane"
+        },
+        {
+            "id": "danish-swedish",
+            "name": "Swedish Danish"
+        },
+        {
+            "id": "deerhound-scottish",
+            "name": "Scottish Deerhound"
+        },
+        {
+            "id": "dhole",
+            "name": "Dhole"
+        },
+        {
+            "id": "dingo",
+            "name": "Dingo"
+        },
+        {
+            "id": "doberman",
+            "name": "Doberman"
+        },
+        {
+            "id": "elkhound-norwegian",
+            "name": "Norwegian Elkhound"
+        },
+        {
+            "id": "entlebucher",
+            "name": "Entlebucher"
+        },
+        {
+            "id": "eskimo",
+            "name": "Eskimo"
+        },
+        {
+            "id": "finnish-lapphund",
+            "name": "Lapphund Finnish"
+        },
+        {
+            "id": "frise-bichon",
+            "name": "Bichon Frise"
+        },
+        {
+            "id": "gaddi-indian",
+            "name": "Indian Gaddi"
+        },
+        {
+            "id": "german-shepherd",
+            "name": "Shepherd German"
+        },
+        {
+            "id": "greyhound-indian",
+            "name": "Indian Greyhound"
+        },
+        {
+            "id": "greyhound-italian",
+            "name": "Italian Greyhound"
+        },
+        {
+            "id": "groenendael",
+            "name": "Groenendael"
+        },
+        {
+            "id": "havanese",
+            "name": "Havanese"
+        },
+        {
+            "id": "hound-afghan",
+            "name": "Afghan Hound"
+        },
+        {
+            "id": "hound-basset",
+            "name": "Basset Hound"
+        },
+        {
+            "id": "hound-blood",
+            "name": "Blood Hound"
+        },
+        {
+            "id": "hound-english",
+            "name": "English Hound"
+        },
+        {
+            "id": "hound-ibizan",
+            "name": "Ibizan Hound"
+        },
+        {
+            "id": "hound-plott",
+            "name": "Plott Hound"
+        },
+        {
+            "id": "hound-walker",
+            "name": "Walker Hound"
+        },
+        {
+            "id": "husky",
+            "name": "Husky"
+        },
+        {
+            "id": "keeshond",
+            "name": "Keeshond"
+        },
+        {
+            "id": "kelpie",
+            "name": "Kelpie"
+        },
+        {
+            "id": "kombai",
+            "name": "Kombai"
+        },
+        {
+            "id": "komondor",
+            "name": "Komondor"
+        },
+        {
+            "id": "kuvasz",
+            "name": "Kuvasz"
+        },
+        {
+            "id": "labradoodle",
+            "name": "Labradoodle"
+        },
+        {
+            "id": "labrador",
+            "name": "Labrador"
+        },
+        {
+            "id": "leonberg",
+            "name": "Leonberg"
+        },
+        {
+            "id": "lhasa",
+            "name": "Lhasa"
+        },
+        {
+            "id": "malamute",
+            "name": "Malamute"
+        },
+        {
+            "id": "malinois",
+            "name": "Malinois"
+        },
+        {
+            "id": "maltese",
+            "name": "Maltese"
+        },
+        {
+            "id": "mastiff-bull",
+            "name": "Bull Mastiff"
+        },
+        {
+            "id": "mastiff-english",
+            "name": "English Mastiff"
+        },
+        {
+            "id": "mastiff-indian",
+            "name": "Indian Mastiff"
+        },
+        {
+            "id": "mastiff-tibetan",
+            "name": "Tibetan Mastiff"
+        },
+        {
+            "id": "mexicanhairless",
+            "name": "Mexicanhairless"
+        },
+        {
+            "id": "mix",
+            "name": "Mix"
+        },
+        {
+            "id": "mountain-bernese",
+            "name": "Bernese Mountain"
+        },
+        {
+            "id": "mountain-swiss",
+            "name": "Swiss Mountain"
+        },
+        {
+            "id": "mudhol-indian",
+            "name": "Indian Mudhol"
+        },
+        {
+            "id": "newfoundland",
+            "name": "Newfoundland"
+        },
+        {
+            "id": "otterhound",
+            "name": "Otterhound"
+        },
+        {
+            "id": "ovcharka-caucasian",
+            "name": "Caucasian Ovcharka"
+        },
+        {
+            "id": "papillon",
+            "name": "Papillon"
+        },
+        {
+            "id": "pariah-indian",
+            "name": "Indian Pariah"
+        },
+        {
+            "id": "pekinese",
+            "name": "Pekinese"
+        },
+        {
+            "id": "pembroke",
+            "name": "Pembroke"
+        },
+        {
+            "id": "pinscher-miniature",
+            "name": "Miniature Pinscher"
+        },
+        {
+            "id": "pitbull",
+            "name": "Pitbull"
+        },
+        {
+            "id": "pointer-german",
+            "name": "German Pointer"
+        },
+        {
+            "id": "pointer-germanlonghair",
+            "name": "Germanlonghair Pointer"
+        },
+        {
+            "id": "pomeranian",
+            "name": "Pomeranian"
+        },
+        {
+            "id": "poodle-medium",
+            "name": "Medium Poodle"
+        },
+        {
+            "id": "poodle-miniature",
+            "name": "Miniature Poodle"
+        },
+        {
+            "id": "poodle-standard",
+            "name": "Standard Poodle"
+        },
+        {
+            "id": "poodle-toy",
+            "name": "Toy Poodle"
+        },
+        {
+            "id": "pug",
+            "name": "Pug"
+        },
+        {
+            "id": "puggle",
+            "name": "Puggle"
+        },
+        {
+            "id": "pyrenees",
+            "name": "Pyrenees"
+        },
+        {
+            "id": "rajapalayam-indian",
+            "name": "Indian Rajapalayam"
+        },
+        {
+            "id": "redbone",
+            "name": "Redbone"
+        },
+        {
+            "id": "retriever-chesapeake",
+            "name": "Chesapeake Retriever"
+        },
+        {
+            "id": "retriever-curly",
+            "name": "Curly Retriever"
+        },
+        {
+            "id": "retriever-flatcoated",
+            "name": "Flatcoated Retriever"
+        },
+        {
+            "id": "retriever-golden",
+            "name": "Golden Retriever"
+        },
+        {
+            "id": "ridgeback-rhodesian",
+            "name": "Rhodesian Ridgeback"
+        },
+        {
+            "id": "rottweiler",
+            "name": "Rottweiler"
+        },
+        {
+            "id": "rough-collie",
+            "name": "Collie Rough"
+        },
+        {
+            "id": "saluki",
+            "name": "Saluki"
+        },
+        {
+            "id": "samoyed",
+            "name": "Samoyed"
+        },
+        {
+            "id": "schipperke",
+            "name": "Schipperke"
+        },
+        {
+            "id": "schnauzer-giant",
+            "name": "Giant Schnauzer"
+        },
+        {
+            "id": "schnauzer-miniature",
+            "name": "Miniature Schnauzer"
+        },
+        {
+            "id": "segugio-italian",
+            "name": "Italian Segugio"
+        },
+        {
+            "id": "setter-english",
+            "name": "English Setter"
+        },
+        {
+            "id": "setter-gordon",
+            "name": "Gordon Setter"
+        },
+        {
+            "id": "setter-irish",
+            "name": "Irish Setter"
+        },
+        {
+            "id": "sharpei",
+            "name": "Sharpei"
+        },
+        {
+            "id": "sheepdog-english",
+            "name": "English Sheepdog"
+        },
+        {
+            "id": "sheepdog-indian",
+            "name": "Indian Sheepdog"
+        },
+        {
+            "id": "sheepdog-shetland",
+            "name": "Shetland Sheepdog"
+        },
+        {
+            "id": "shiba",
+            "name": "Shiba"
+        },
+        {
+            "id": "shihtzu",
+            "name": "Shihtzu"
+        },
+        {
+            "id": "spaniel-blenheim",
+            "name": "Blenheim Spaniel"
+        },
+        {
+            "id": "spaniel-brittany",
+            "name": "Brittany Spaniel"
+        },
+        {
+            "id": "spaniel-cocker",
+            "name": "Cocker Spaniel"
+        },
+        {
+            "id": "spaniel-irish",
+            "name": "Irish Spaniel"
+        },
+        {
+            "id": "spaniel-japanese",
+            "name": "Japanese Spaniel"
+        },
+        {
+            "id": "spaniel-sussex",
+            "name": "Sussex Spaniel"
+        },
+        {
+            "id": "spaniel-welsh",
+            "name": "Welsh Spaniel"
+        },
+        {
+            "id": "spitz-indian",
+            "name": "Indian Spitz"
+        },
+        {
+            "id": "spitz-japanese",
+            "name": "Japanese Spitz"
+        },
+        {
+            "id": "springer-english",
+            "name": "English Springer"
+        },
+        {
+            "id": "stbernard",
+            "name": "Stbernard"
+        },
+        {
+            "id": "terrier-american",
+            "name": "American Terrier"
+        },
+        {
+            "id": "terrier-andalusian",
+            "name": "Andalusian Terrier"
+        },
+        {
+            "id": "terrier-australian",
+            "name": "Australian Terrier"
+        },
+        {
+            "id": "terrier-bedlington",
+            "name": "Bedlington Terrier"
+        },
+        {
+            "id": "terrier-border",
+            "name": "Border Terrier"
+        },
+        {
+            "id": "terrier-boston",
+            "name": "Boston Terrier"
+        },
+        {
+            "id": "terrier-cairn",
+            "name": "Cairn Terrier"
+        },
+        {
+            "id": "terrier-dandie",
+            "name": "Dandie Terrier"
+        },
+        {
+            "id": "terrier-fox",
+            "name": "Fox Terrier"
+        },
+        {
+            "id": "terrier-irish",
+            "name": "Irish Terrier"
+        },
+        {
+            "id": "terrier-kerryblue",
+            "name": "Kerryblue Terrier"
+        },
+        {
+            "id": "terrier-lakeland",
+            "name": "Lakeland Terrier"
+        },
+        {
+            "id": "terrier-norfolk",
+            "name": "Norfolk Terrier"
+        },
+        {
+            "id": "terrier-norwich",
+            "name": "Norwich Terrier"
+        },
+        {
+            "id": "terrier-patterdale",
+            "name": "Patterdale Terrier"
+        },
+        {
+            "id": "terrier-russell",
+            "name": "Russell Terrier"
+        },
+        {
+            "id": "terrier-scottish",
+            "name": "Scottish Terrier"
+        },
+        {
+            "id": "terrier-sealyham",
+            "name": "Sealyham Terrier"
+        },
+        {
+            "id": "terrier-silky",
+            "name": "Silky Terrier"
+        },
+        {
+            "id": "terrier-tibetan",
+            "name": "Tibetan Terrier"
+        },
+        {
+            "id": "terrier-toy",
+            "name": "Toy Terrier"
+        },
+        {
+            "id": "terrier-welsh",
+            "name": "Welsh Terrier"
+        },
+        {
+            "id": "terrier-westhighland",
+            "name": "Westhighland Terrier"
+        },
+        {
+            "id": "terrier-wheaten",
+            "name": "Wheaten Terrier"
+        },
+        {
+            "id": "terrier-yorkshire",
+            "name": "Yorkshire Terrier"
+        },
+        {
+            "id": "tervuren",
+            "name": "Tervuren"
+        },
+        {
+            "id": "vizsla",
+            "name": "Vizsla"
+        },
+        {
+            "id": "waterdog-spanish",
+            "name": "Spanish Waterdog"
+        },
+        {
+            "id": "weimaraner",
+            "name": "Weimaraner"
+        },
+        {
+            "id": "whippet",
+            "name": "Whippet"
+        },
+        {
+            "id": "wolfhound-irish",
+            "name": "Irish Wolfhound"
+        }
+    ],
+    "gatos": [
+        {
+            "id": "criollo",
+            "name": "Criollo / Mestizo"
+        },
+        {
+            "id": "abys",
+            "name": "Abyssinian"
+        },
+        {
+            "id": "aege",
+            "name": "Aegean"
+        },
+        {
+            "id": "abob",
+            "name": "American Bobtail"
+        },
+        {
+            "id": "acur",
+            "name": "American Curl"
+        },
+        {
+            "id": "asho",
+            "name": "American Shorthair"
+        },
+        {
+            "id": "awir",
+            "name": "American Wirehair"
+        },
+        {
+            "id": "amau",
+            "name": "Arabian Mau"
+        },
+        {
+            "id": "amis",
+            "name": "Australian Mist"
+        },
+        {
+            "id": "bali",
+            "name": "Balinese"
+        },
+        {
+            "id": "bamb",
+            "name": "Bambino"
+        },
+        {
+            "id": "beng",
+            "name": "Bengal"
+        },
+        {
+            "id": "birm",
+            "name": "Birman"
+        },
+        {
+            "id": "bomb",
+            "name": "Bombay"
+        },
+        {
+            "id": "bslo",
+            "name": "British Longhair"
+        },
+        {
+            "id": "bsho",
+            "name": "British Shorthair"
+        },
+        {
+            "id": "bure",
+            "name": "Burmese"
+        },
+        {
+            "id": "buri",
+            "name": "Burmilla"
+        },
+        {
+            "id": "cspa",
+            "name": "California Spangled"
+        },
+        {
+            "id": "ctif",
+            "name": "Chantilly-Tiffany"
+        },
+        {
+            "id": "char",
+            "name": "Chartreux"
+        },
+        {
+            "id": "chau",
+            "name": "Chausie"
+        },
+        {
+            "id": "chee",
+            "name": "Cheetoh"
+        },
+        {
+            "id": "csho",
+            "name": "Colorpoint Shorthair"
+        },
+        {
+            "id": "crex",
+            "name": "Cornish Rex"
+        },
+        {
+            "id": "cymr",
+            "name": "Cymric"
+        },
+        {
+            "id": "cypr",
+            "name": "Cyprus"
+        },
+        {
+            "id": "drex",
+            "name": "Devon Rex"
+        },
+        {
+            "id": "dons",
+            "name": "Donskoy"
+        },
+        {
+            "id": "lihu",
+            "name": "Dragon Li"
+        },
+        {
+            "id": "emau",
+            "name": "Egyptian Mau"
+        },
+        {
+            "id": "ebur",
+            "name": "European Burmese"
+        },
+        {
+            "id": "esho",
+            "name": "Exotic Shorthair"
+        },
+        {
+            "id": "hbro",
+            "name": "Havana Brown"
+        },
+        {
+            "id": "hima",
+            "name": "Himalayan"
+        },
+        {
+            "id": "jbob",
+            "name": "Japanese Bobtail"
+        },
+        {
+            "id": "java",
+            "name": "Javanese"
+        },
+        {
+            "id": "khao",
+            "name": "Khao Manee"
+        },
+        {
+            "id": "kora",
+            "name": "Korat"
+        },
+        {
+            "id": "kuri",
+            "name": "Kurilian"
+        },
+        {
+            "id": "lape",
+            "name": "LaPerm"
+        },
+        {
+            "id": "mcoo",
+            "name": "Maine Coon"
+        },
+        {
+            "id": "mala",
+            "name": "Malayan"
+        },
+        {
+            "id": "manx",
+            "name": "Manx"
+        },
+        {
+            "id": "munc",
+            "name": "Munchkin"
+        },
+        {
+            "id": "nebe",
+            "name": "Nebelung"
+        },
+        {
+            "id": "norw",
+            "name": "Norwegian Forest Cat"
+        },
+        {
+            "id": "ocic",
+            "name": "Ocicat"
+        },
+        {
+            "id": "orie",
+            "name": "Oriental"
+        },
+        {
+            "id": "pers",
+            "name": "Persian"
+        },
+        {
+            "id": "pixi",
+            "name": "Pixie-bob"
+        },
+        {
+            "id": "raga",
+            "name": "Ragamuffin"
+        },
+        {
+            "id": "ragd",
+            "name": "Ragdoll"
+        },
+        {
+            "id": "rblu",
+            "name": "Russian Blue"
+        },
+        {
+            "id": "sava",
+            "name": "Savannah"
+        },
+        {
+            "id": "sfol",
+            "name": "Scottish Fold"
+        },
+        {
+            "id": "srex",
+            "name": "Selkirk Rex"
+        },
+        {
+            "id": "siam",
+            "name": "Siamese"
+        },
+        {
+            "id": "sibe",
+            "name": "Siberian"
+        },
+        {
+            "id": "sing",
+            "name": "Singapura"
+        },
+        {
+            "id": "snow",
+            "name": "Snowshoe"
+        },
+        {
+            "id": "soma",
+            "name": "Somali"
+        },
+        {
+            "id": "sphy",
+            "name": "Sphynx"
+        },
+        {
+            "id": "tonk",
+            "name": "Tonkinese"
+        },
+        {
+            "id": "toyg",
+            "name": "Toyger"
+        },
+        {
+            "id": "tang",
+            "name": "Turkish Angora"
+        },
+        {
+"name": "York Chocolate"
+        }
+    ]
+};
 
     const createRazaSelect = document.getElementById('create-pet-raza');
 
@@ -916,7 +1805,7 @@
         });
     });
 
-    // Si el navegador restaurÃ³ la selecciÃ³n tras recargar, forzar el disparo del evento
+    // Si el navegador restauró la selección tras recargar, forzar el disparo del evento
     const selectedEspecie = document.querySelector('input[name="create_especie"]:checked');
     if (selectedEspecie) {
         selectedEspecie.dispatchEvent(new Event('change'));
@@ -974,8 +1863,8 @@
         if(pets.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 3rem; background: rgba(15, 23, 42, 0.4); border-radius: 20px; border: 2px dashed rgba(255,255,255,0.1);">
-                    <p style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1rem;">No tienes mascotas registradas aÃºn.</p>
-                    <p style="color: var(--text-muted); font-size: 1rem;">AÃ±ade tu primer peludo para comenzar.</p>
+                    <p style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1rem;">No tienes mascotas registradas aún.</p>
+                    <p style="color: var(--text-muted); font-size: 1rem;">Añade tu primer peludo para comenzar.</p>
                 </div>
             `;
             return;
@@ -996,9 +1885,9 @@
             if (currentYears === 0) {
                 ageString = currentMonths === 1 ? "1 mesecito" : `${currentMonths} mesecitos`;
             } else if (currentYears === 1) {
-                ageString = "1 aÃ±ito";
+                ageString = "1 añito";
             } else {
-                ageString = `${currentYears} aÃ±itos`;
+                ageString = `${currentYears} añitos`;
             }
 
             if (currentYears > 0 && currentMonths > 0) {
@@ -1008,20 +1897,20 @@
             const avatarHTML = pet.avatarSrc 
                 ? `<div class="avatar-container" data-index="${index}" style="position:relative; cursor:pointer; width: 130px; height: 130px; margin: 0 auto;">
                      <img src="${pet.avatarSrc}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-                     <div class="avatar-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; color: white; font-size: 0.8rem; font-weight: bold;">âœï¸ Editar</div>
+                     <div class="avatar-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; color: white; font-size: 0.8rem; font-weight: bold;">✏️ Editar</div>
                    </div>`
                 : `<div class="avatar-container" data-index="${index}" style="position:relative; cursor:pointer; width: 130px; height: 130px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; border: 2px dashed rgba(255,255,255,0.3); margin: 0 auto;">
-                     ðŸ¾
-                     <div class="avatar-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; color: white; font-size: 0.8rem; font-weight: bold;">âœï¸ Editar</div>
+                     🐾
+                     <div class="avatar-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; color: white; font-size: 0.8rem; font-weight: bold;">✏️ Editar</div>
                    </div>`;
             
-            const pesoText = pet.lastPeso ? ` â€¢ ${pet.lastPeso}${pet.lastUnidadPeso}` : '';
+            const pesoText = pet.lastPeso ? ` • ${pet.lastPeso}${pet.lastUnidadPeso}` : '';
             
-            // Determinar PrÃ³ximo Evento
+            // Determinar Próximo Evento
             let nextEventText = "Sin citas pendientes";
             if (pet.events && pet.events.length > 0) {
                 const now = new Date();
-                // Normalizar "now" a las 00:00 para comparaciÃ³n justa por dÃ­a
+                // Normalizar "now" a las 00:00 para comparación justa por día
                 now.setHours(0, 0, 0, 0);
                 
                 const upcomingEvents = pet.events.filter(e => {
@@ -1061,17 +1950,17 @@
                     <div>
                         <h3 style="margin: 0; font-size: 2.2rem; color: var(--brand-green); font-weight: 800;">${pet.name}</h3>
                         <p style="margin: 0; margin-top: 0.5rem; color: var(--text-muted); font-size: 1.2rem;">
-                            ${pet.especie === 'perro' ? 'ðŸ¶ Perro' : 'ðŸ± Gato'} â€¢ ${ageString}${pesoText}
+                            ${pet.especie === 'perro' ? '🐶 Perro' : '🐱 Gato'} • ${ageString}${pesoText}
                         </p>
                         <p style="margin: 0; margin-top: 0.8rem; color: rgba(255,255,255,0.8); font-size: 1rem; background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border-radius: 8px;">
-                            ðŸ“… PrÃ³ximo Evento: <span style="font-weight: bold; color: white;">${nextEventText}</span>
+                            📅 Próximo Evento: <span style="font-weight: bold; color: white;">${nextEventText}</span>
                         </p>
                     </div>
                 </div>
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; width: 100%; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem;">
                     <button class="btn-primary calc-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; background: linear-gradient(135deg, var(--brand-blue), #1e3a8a);">${btnText}</button>
                     <button class="btn-secondary agenda-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white;">Ver Agenda</button>
-                    ${pet.lastDieta ? `<button class="btn-secondary pdf-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; border: 1px solid rgba(148, 163, 184, 0.4); background: rgba(148, 163, 184, 0.1); color: #cbd5e1; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><span class="pdf-spinner" style="display:none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></span> ðŸ“„ Exportar Reporte</button>` : ''}
+                    ${pet.lastDieta ? `<button class="btn-secondary pdf-btn" data-index="${index}" style="flex: 1; min-width: 150px; padding: 1rem; font-size: 1.1rem; border-radius: 12px; transition: transform 0.2s; border: 1px solid rgba(148, 163, 184, 0.4); background: rgba(148, 163, 184, 0.1); color: #cbd5e1; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><span class="pdf-spinner" style="display:none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></span> 📄 Exportar Reporte</button>` : ''}
                     <button class="btn-danger delete-pet-btn" data-index="${index}" title="Eliminar mascota" style="padding: 0.6rem 0.8rem; border-radius: 8px; transition: transform 0.2s; border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); color: #fca5a5; cursor: pointer; display: flex; align-items: center; justify-content: center;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>
@@ -1101,7 +1990,7 @@
                     document.getElementById('racion-recomendacion').innerText = p.lastDieta.recomendacion;
                     document.getElementById('ingredient-list').innerHTML = p.lastDieta.ingredientsHTML;
                     
-                    document.getElementById('btn-close-calculator').innerHTML = `<span>â—€ Volver al Perfil de ${p.name}</span>`;
+                    document.getElementById('btn-close-calculator').innerHTML = `<span>◀ Volver al Perfil de ${p.name}</span>`;
                     showView(viewCalculator);
                 } else {
                     document.getElementById('calculator-card').style.display = 'block';
@@ -1142,7 +2031,7 @@
         document.querySelectorAll('.delete-pet-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const idx = parseInt(e.currentTarget.getAttribute('data-index'));
-                if(confirm('Â¿EstÃ¡s seguro de que deseas eliminar esta mascota? Toda su historia mÃ©dica y nutricional se perderÃ¡ para siempre.')) {
+                if(confirm('¿Estás seguro de que deseas eliminar esta mascota? Toda su historia médica y nutricional se perderá para siempre.')) {
                     const petToDelete = pets[idx];
                     try {
                         if (currentUser && window.firebaseAuth) {
@@ -1162,7 +2051,11 @@
                         renderPets();
                         updatePetSelectors();
                         
-                        if (activePetIndex === -1) {
+                        if (activePetIndex !== -1) {
+                            updateDashboardDetails();
+                        } else {
+                            // Redibuja la vista base, renderPets se encargará de mostrar el placeholder.
+                            document.getElementById('dashboard-pet-name').innerText = '--';
                             showView(viewDashboard); 
                         }
                     } catch (error) {
@@ -1189,7 +2082,7 @@
         });
     }
 
-    // LÃ³gica para procesar la subida del avatar desde el Dashboard
+    // Lógica para procesar la subida del avatar desde el Dashboard
     document.getElementById('dashboard-avatar-upload').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         const idxStr = e.target.getAttribute('data-index');
@@ -1292,7 +2185,7 @@
                 else if(totalMeses <= 5) multiplier = 0.08;
                 else if(totalMeses <= 8) multiplier = 0.06;
                 else multiplier = 0.04;
-            } else if (totalMeses < 84) { // Adulto 1-6 aÃ±os
+            } else if (totalMeses < 84) { // Adulto 1-6 años
                 if(actividad === 'sedentario') multiplier = 0.015;
                 else if(actividad === 'alto') multiplier = 0.035;
                 else multiplier = 0.025; // Mantenimiento
@@ -1329,8 +2222,8 @@
                 ratios = [
                     {name: "Carne Magra", img: "img/icon_meat.png", pct: 0.70},
                     {name: "Hueso Carnoso", img: "img/icon_bone.png", pct: 0.10},
-                    {name: "HÃ­gado", img: "img/icon_liver.png", pct: 0.05},
-                    {name: "Otros Ã³rganos", img: "img/icon_organs.png", pct: 0.05},
+                    {name: "Hígado", img: "img/icon_liver.png", pct: 0.05},
+                    {name: "Otros órganos", img: "img/icon_organs.png", pct: 0.05},
                     {name: "Verduras (Opcional)", img: "img/icon_veggies.png", pct: 0.09, isOptional: true},
                     {name: "Frutas (Opcional)", img: "img/icon_fruits.png", pct: 0.01, isOptional: true}
                 ];
@@ -1339,8 +2232,8 @@
                 ratios = [
                     {name: "Carne Magra", img: "img/icon_meat.png", pct: 0.80},
                     {name: "Hueso Carnoso", img: "img/icon_bone.png", pct: 0.10},
-                    {name: "Otros Ã³rganos", img: "img/icon_organs.png", pct: 0.06},
-                    {name: "HÃ­gado", img: "img/icon_liver.png", pct: 0.04}
+                    {name: "Otros órganos", img: "img/icon_organs.png", pct: 0.06},
+                    {name: "Hígado", img: "img/icon_liver.png", pct: 0.04}
                 ];
                 document.getElementById('taurina-warning').style.display = 'block';
             }
@@ -1352,7 +2245,7 @@
         
         document.getElementById('racion-total').innerText = Math.round(racionTotalGramos) + 'g';
         
-        // CÃ¡lculo de requerimiento calÃ³rico (FÃ³rmula RER y MER - NRC/WSAVA)
+        // Cálculo de requerimiento calórico (Fórmula RER y MER - NRC/WSAVA)
         const RER = 70 * Math.pow(pesoKg, 0.75);
         let factorActividadCalorias = 1.6;
         
@@ -1401,7 +2294,7 @@
         });
 
         if (activePetIndex !== -1) {
-            // Actualizar UI del Dashboard con el Ãºltimo peso reportado
+            // Actualizar UI del Dashboard con el último peso reportado
             const currentPet = pets[activePetIndex];
             currentPet.lastPeso = peso;
             currentPet.lastUnidadPeso = unidadPeso;
@@ -1426,9 +2319,9 @@
             await savePetToFirestore(currentPet);
 
             renderPets();
-            document.getElementById('btn-close-calculator').innerHTML = `<span>â—€ Volver al Perfil de ${currentPet.name}</span>`;
+            document.getElementById('btn-close-calculator').innerHTML = `<span>◀ Volver al Perfil de ${currentPet.name}</span>`;
         } else {
-            document.getElementById('btn-close-calculator').innerHTML = `<span>â—€ Volver al Dashboard</span>`;
+            document.getElementById('btn-close-calculator').innerHTML = `<span>◀ Volver al Dashboard</span>`;
         }
 
     });
@@ -1442,9 +2335,9 @@
         }
     });
 
-    // ================= LÃ“GICA DE CALENDARIO =================
+    // ================= LÓGICA DE CALENDARIO =================
     document.getElementById('btn-close-calendar').addEventListener('click', () => {
-        renderPets(); // Refresh text de prÃ³ximo evento
+        renderPets(); // Refresh text de próximo evento
         showView(viewDashboard);
     });
 
@@ -1479,10 +2372,10 @@
         const firstDay = new Date(currentYear, currentMonth, 1).getDay(); // 0 (Dom) - 6 (Sab)
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         
-        // Ajustar Lunes como primer dÃ­a de la semana (1 (Lun) - 0(Dom))
+        // Ajustar Lunes como primer día de la semana (1 (Lun) - 0(Dom))
         let startPadding = firstDay === 0 ? 6 : firstDay - 1;
 
-        // Celdas vacÃ­as iniciales
+        // Celdas vacías iniciales
         for (let i = 0; i < startPadding; i++) {
             const cell = document.createElement('div');
             grid.appendChild(cell);
@@ -1497,7 +2390,7 @@
             const cellDate = new Date(currentYear, currentMonth, day);
             cellDate.setHours(0,0,0,0);
             
-            // Buscar evento para este dÃ­a exacto
+            // Buscar evento para este día exacto
             let dayEvent = null;
             if(currentPet && currentPet.events) {
                 dayEvent = currentPet.events.find(e => {
@@ -1568,7 +2461,7 @@
         if (existingEvent) {
             const evTitle = existingEvent.event_type || existingEvent.title || 'Evento';
             const evDesc = existingEvent.description || '';
-            existingTextDiv.innerHTML = `ðŸ“Œ Toca hoy: <br><span style="color:white; font-size:1.3rem;">${evTitle}</span><br><span style="font-size: 0.9rem; color: var(--text-muted);">${evDesc}</span>`;
+            existingTextDiv.innerHTML = `📌 Toca hoy: <br><span style="color:white; font-size:1.3rem;">${evTitle}</span><br><span style="font-size: 0.9rem; color: var(--text-muted);">${evDesc}</span>`;
             existingDiv.style.display = 'block';
             titleInput.placeholder = "Reemplazar evento actual...";
             titleInput.value = "";
@@ -1581,7 +2474,7 @@
         }
 
         modal.style.display = 'flex';
-        // AnimaciÃ³n pequeÃ±a delay
+        // Animación pequeña delay
         setTimeout(() => {
             modalContent.style.transform = 'scale(1)';
             modalContent.style.opacity = '1';
@@ -1624,7 +2517,7 @@
                 return eDate.getTime() !== selectedDateForEvent.getTime();
             });
 
-            // AÃ±adir nuevo
+            // Añadir nuevo
             currentPet.events.push({
                 id: Date.now(),
                 title: title,
@@ -1637,18 +2530,18 @@
         closeEventModal();
     });
     // =========================================================================
-    // LÃ“GICA DE SUSCRIPCIONES Y PAYPAL
+    // LÓGICA DE SUSCRIPCIONES Y PAYPAL
     // =========================================================================
     
     document.getElementById('btn-back-dashboard-sub').addEventListener('click', async () => {
-        // Restaurar texto normal por si se cambiÃ³ en el onboarding
+        // Restaurar texto normal por si se cambió en el onboarding
         document.getElementById('btn-back-dashboard-sub').innerText = "Volver al Dashboard";
         showView(viewDashboard);
         await loadPetsFromFirestore();
     });
 
     document.getElementById('btn-logout-subscription').addEventListener('click', async () => {
-        if (confirm("Â¿EstÃ¡s seguro de que deseas cerrar sesiÃ³n?")) {
+        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
             await window.firebaseAuth.signOut(window.firebaseAuth.auth);
             showView(viewLogin);
         }
@@ -1678,17 +2571,17 @@
                     return actions.subscription.create({
                         /* Creates the subscription */
                         plan_id: PLAN_ID,
-                        custom_id: currentUser.uid // Pasamos el UID para que el Webhook sepa a quiÃ©n activar
+                        custom_id: currentUser.uid // Pasamos el UID para que el Webhook sepa a quién activar
                     });
                 },
                 onApprove: function(data, actions) {
-                    alert('Â¡SuscripciÃ³n aprobada! Tu panel se desbloquearÃ¡ en los prÃ³ximos minutos una vez que PayPal confirme el pago a nuestro sistema.');
-                    // Nota: El backend recibirÃ¡ el webhook y actualizarÃ¡ Firestore.
-                    // Opcionalmente podemos forzar un refresh manual aquÃ­ si quisiÃ©ramos.
+                    alert('¡Suscripción aprobada! Tu panel se desbloqueará en los próximos minutos una vez que PayPal confirme el pago a nuestro sistema.');
+                    // Nota: El backend recibirá el webhook y actualizará Firestore.
+                    // Opcionalmente podemos forzar un refresh manual aquí si quisiéramos.
                 },
                 onError: function(err) {
                     console.error("Error en PayPal:", err);
-                    alert("OcurriÃ³ un error al intentar abrir la pasarela de pago.");
+                    alert("Ocurrió un error al intentar abrir la pasarela de pago.");
                 }
             }).render('#paypal-button-container');
             paypalRendered = true;
@@ -1698,30 +2591,30 @@
     }
 });
 
-// ================= GENERACIÃ“N DE PDF =================
+// ================= GENERACIÓN DE PDF =================
 window.generatePDFReport = function(pet) {
     if (!pet || !pet.lastDieta) {
-        alert("Esta mascota no tiene dieta calculada aÃºn.");
+        alert("Esta mascota no tiene dieta calculada aún.");
         return;
     }
     
     const bDateStr = pet.birthDate ? new Date(pet.birthDate) : null;
     const ageY = bDateStr ? new Date().getFullYear() - bDateStr.getFullYear() : '--';
     
-    // Generar la receta purista directamente calculÃ¡ndola, sin leer HTML sucio del pasado
+    // Generar la receta purista directamente calculándola, sin leer HTML sucio del pasado
     const dogRatiosBARF = [
         { name: 'Carne Magra', pct: 0.70 },
         { name: 'Hueso Carnoso', pct: 0.10 },
-        { name: 'HÃ­gado', pct: 0.05 },
-        { name: 'Otros Ã³rganos', pct: 0.05 },
+        { name: 'Hígado', pct: 0.05 },
+        { name: 'Otros órganos', pct: 0.05 },
         { name: 'Verduras/Frutas', pct: 0.10, isOptional: true }
     ];
 
     const catRatiosBARF = [
         { name: 'Carne Magra', pct: 0.80 },
         { name: 'Hueso Carnoso', pct: 0.10 },
-        { name: 'HÃ­gado', pct: 0.05 },
-        { name: 'Otros Ã³rganos', pct: 0.05 }
+        { name: 'Hígado', pct: 0.05 },
+        { name: 'Otros órganos', pct: 0.05 }
     ];
     
     let ratios = [];
@@ -1758,7 +2651,7 @@ window.generatePDFReport = function(pet) {
     // Formatear historial de peso
     let pesoHistoryHTML = "";
     if (pet.pesoHistory && pet.pesoHistory.length > 0) {
-        const historySorted = [...pet.pesoHistory].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 5); // Ãšltimos 5
+        const historySorted = [...pet.pesoHistory].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 5); // Últimos 5
         pesoHistoryHTML = `
             <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc;">
                 <h3 style="margin: 0 0 5px 0; font-size: 14px; color: #555;">Historial de Peso:</h3>
@@ -1772,13 +2665,13 @@ window.generatePDFReport = function(pet) {
     // Formatear historial de SkinGuard
     let skinHistoryHTML = "";
     if (pet.skinHistory && pet.skinHistory.length > 0) {
-        const skinSorted = [...pet.skinHistory].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 3); // Ãšltimos 3
+        const skinSorted = [...pet.skinHistory].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 3); // Últimos 3
         skinHistoryHTML = `
             <div style="margin-bottom: 20px;">
-                <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">Historial DermatolÃ³gico (IA)</h2>
+                <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">Historial Dermatológico (IA)</h2>
                 ${skinSorted.map(s => `
                     <div style="margin-bottom: 10px; padding: 10px; background-color: #fef2f2; border-left: 4px solid #ef4444;">
-                        <p style="margin: 2px 0; font-size: 14px;"><strong>Fecha del anÃ¡lisis:</strong> ${new Date(s.date).toLocaleDateString()}</p>
+                        <p style="margin: 2px 0; font-size: 14px;"><strong>Fecha del análisis:</strong> ${new Date(s.date).toLocaleDateString()}</p>
                         <p style="margin: 2px 0; font-size: 14px;"><strong>Sospecha IA:</strong> <span style="color: #b91c1c; font-weight: bold;">${s.diagnostico}</span> (${s.probabilidad})</p>
                         <p style="margin: 2px 0; font-size: 14px;"><strong>Nivel de Urgencia:</strong> ${s.urgencia}</p>
                     </div>
@@ -1787,13 +2680,13 @@ window.generatePDFReport = function(pet) {
         `;
     }
 
-    // Formatear historial mÃ©dico en general (Notas IA)
+    // Formatear historial médico en general (Notas IA)
     let medicalHistoryHTML = "";
     if (pet.medicalHistory && pet.medicalHistory.length > 0) {
         const historySorted = [...pet.medicalHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
         medicalHistoryHTML = `
             <div style="margin-bottom: 20px;">
-                <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">Historial MÃ©dico ClÃ­nico</h2>
+                <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">Historial Médico Clínico</h2>
                 <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #333;">
                     ${historySorted.map(note => `<li style="margin-bottom: 5px;"><strong>${new Date(note.date).toLocaleDateString()}</strong> &mdash; ${note.note}</li>`).join('')}
                 </ul>
@@ -1801,21 +2694,21 @@ window.generatePDFReport = function(pet) {
         `;
     }
 
-    // Generamos un string HTML puro sin flexboxes frÃ¡giles
+    // Generamos un string HTML puro sin flexboxes frágiles
     const htmlString = `
         <div style="width: 700px; font-family: Arial, sans-serif; color: #000; background: #fff; text-align: left; padding: 0; margin: 0;">
             
             <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
                 <img src="assets/logo-fondo.png" style="height: 220px; margin-bottom: 5px;">
-                <h1 style="margin: 0; font-size: 28px;">Reporte ClÃ­nico y Nutricional</h1>
-                <p style="margin: 5px 0 0 0; color: #555; font-size: 14px;">Documento Oficial Generado AutomÃ¡ticamente</p>
+                <h1 style="margin: 0; font-size: 28px;">Reporte Clínico y Nutricional</h1>
+                <p style="margin: 5px 0 0 0; color: #555; font-size: 14px;">Documento Oficial Generado Automáticamente</p>
             </div>
             
             <div style="margin-bottom: 20px;">
                 <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">Ficha del Paciente</h2>
                 <p style="margin: 5px 0; font-size: 16px;"><strong>Nombre:</strong> ${pet.name}</p>
                 <p style="margin: 5px 0; font-size: 16px;"><strong>Especie:</strong> ${pet.especie} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Raza:</strong> ${pet.raza || 'N/A'}</p>
-                <p style="margin: 5px 0; font-size: 16px;"><strong>Edad aprox:</strong> ${ageY} aÃ±os</p>
+                <p style="margin: 5px 0; font-size: 16px;"><strong>Edad aprox:</strong> ${ageY} años</p>
                 <p style="margin: 5px 0; font-size: 16px;"><strong>Peso Actual:</strong> ${pet.lastPeso || '--'} ${pet.lastUnidadPeso || 'kg'}</p>
                 ${pesoHistoryHTML}
             </div>
@@ -1826,25 +2719,25 @@ window.generatePDFReport = function(pet) {
 
             <div style="margin-bottom: 20px;">
                 <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">Plan Nutricional (${pet.tipoDieta === 'mixta' ? 'Dieta Comercial Mixta' : 'Dieta BARF / Natural'})</h2>
-                <p style="margin: 5px 0; font-size: 16px;"><strong>RaciÃ³n Diaria Total:</strong> <span style="color: #059669; font-weight: bold;">${pet.lastDieta.racionTotal}g</span></p>
-                <p style="margin: 5px 0; font-size: 16px;"><strong>Aporte EnergÃ©tico:</strong> ${pet.lastDieta.kcalTotales} kcal</p>
-                <p style="margin: 5px 0; font-size: 16px;"><strong>DistribuciÃ³n:</strong> ${pet.lastDieta.comidas} tomas de ${pet.lastDieta.recomendacion}</p>
+                <p style="margin: 5px 0; font-size: 16px;"><strong>Ración Diaria Total:</strong> <span style="color: #059669; font-weight: bold;">${pet.lastDieta.racionTotal}g</span></p>
+                <p style="margin: 5px 0; font-size: 16px;"><strong>Aporte Energético:</strong> ${pet.lastDieta.kcalTotales} kcal</p>
+                <p style="margin: 5px 0; font-size: 16px;"><strong>Distribución:</strong> ${pet.lastDieta.comidas} tomas de ${pet.lastDieta.recomendacion}</p>
             </div>
             
             <div style="margin-bottom: 20px;">
-                <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">ComposiciÃ³n de la Receta</h2>
+                <h2 style="font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000;">Composición de la Receta</h2>
                 <div>
                     ${listaLimpiaHTML}
                 </div>
             </div>
 
             <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #ccc; padding-top: 10px;">
-                <p>NutriPaws Â© ${new Date().getFullYear()} - Documento ClÃ­nico Orientativo</p>
+                <p>NutriPaws © ${new Date().getFullYear()} - Documento Clínico Orientativo</p>
             </div>
         </div>
     `;
 
-    // Opciones para generar un PDF EstÃ¡ndar Letter limpio
+    // Opciones para generar un PDF Estándar Letter limpio
     const opt = {
         margin:       [0, 0.5, 0.5, 0.5], // Margen superior 0 para eliminar el hueco
         filename:     `Reporte_NutriPaws_${pet.name}.pdf`,
@@ -1853,10 +2746,10 @@ window.generatePDFReport = function(pet) {
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
     
-    // Convertimos directamente desde String HTML (evitando manipulaciÃ³n fallida del DOM)
+    // Convertimos directamente desde String HTML (evitando manipulación fallida del DOM)
     html2pdf().set(opt).from(htmlString).save().catch(err => {
         console.error("Error PDF:", err);
-        alert("OcurriÃ³ un error nativo al generar el PDF.");
+        alert("Ocurrió un error nativo al generar el PDF.");
     });
 };
 
@@ -1864,7 +2757,7 @@ window.generatePDFReport = function(pet) {
 // NUEVAS FUNCIONES: CALCULADORA DE DOSIS Y EMERGENCIAS SOS
 // =========================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Calculadora de DosificaciÃ³n
+    // 1. Calculadora de Dosificación
     const doseSpecies = document.getElementById('dose-species');
     const doseWeight = document.getElementById('dose-weight');
     const doseMedication = document.getElementById('dose-medication');
@@ -1876,19 +2769,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const medsDatabase = {
         perro: [
-            { id: 'meloxicam_dog', name: 'Meloxicam (Dolor/InflamaciÃ³n)', dose_mg_kg: 0.1, formula_desc: '0.1 mg por cada kg de peso' },
-            { id: 'famotidina_dog', name: 'Famotidina (Acidez/GÃ¡strico)', dose_mg_kg: 0.5, formula_desc: '0.5 mg por cada kg de peso' },
-            { id: 'carbon_dog', name: 'CarbÃ³n Activado (IntoxicaciÃ³n)', dose_mg_kg: 1.0, formula_desc: '1 a 2 g por cada kg de peso (MostrarÃ© 1g/kg conservador)' },
+            { id: 'meloxicam_dog', name: 'Meloxicam (Dolor/Inflamación)', dose_mg_kg: 0.1, formula_desc: '0.1 mg por cada kg de peso' },
+            { id: 'famotidina_dog', name: 'Famotidina (Acidez/Gástrico)', dose_mg_kg: 0.5, formula_desc: '0.5 mg por cada kg de peso' },
+            { id: 'carbon_dog', name: 'Carbón Activado (Intoxicación)', dose_mg_kg: 1.0, formula_desc: '1 a 2 g por cada kg de peso (Mostraré 1g/kg conservador)' },
             { id: 'benadryl_dog', name: 'Difenhidramina / Benadryl (Alergias)', dose_mg_kg: 2.0, formula_desc: '2.0 mg por cada kg de peso' },
             { id: 'doxiciclina_dog', name: 'Doxiciclina (Infecciones)', dose_mg_kg: 5.0, formula_desc: '5.0 mg por cada kg de peso (Cada 12 horas)' },
             { id: 'tramadol_dog', name: 'Tramadol (Dolor Fuerte)', dose_mg_kg: 2.0, formula_desc: '2.0 mg por cada kg de peso' },
             { id: 'vitk_dog', name: 'Vitamina K (Raticidas)', dose_mg_kg: 2.5, formula_desc: '2.5 mg por cada kg de peso' },
-            { id: 'peroxido_dog', name: 'Agua Oxigenada 3% (Inducir VÃ³mito)', dose_mg_kg: 1.0, formula_desc: '1 ml por cada kg de peso (MÃ¡x 45ml)' }
+            { id: 'peroxido_dog', name: 'Agua Oxigenada 3% (Inducir Vómito)', dose_mg_kg: 1.0, formula_desc: '1 ml por cada kg de peso (Máx 45ml)' }
         ],
         gato: [
-            { id: 'meloxicam_cat', name: 'Meloxicam (Extremo Cuidado)', dose_mg_kg: 0.05, formula_desc: '0.05 mg por cada kg de peso (Solo 1 dÃ­a)' },
+            { id: 'meloxicam_cat', name: 'Meloxicam (Extremo Cuidado)', dose_mg_kg: 0.05, formula_desc: '0.05 mg por cada kg de peso (Solo 1 día)' },
             { id: 'famotidina_cat', name: 'Famotidina (Acidez)', dose_mg_kg: 0.5, formula_desc: '0.5 mg por cada kg de peso' },
-            { id: 'carbon_cat', name: 'CarbÃ³n Activado (IntoxicaciÃ³n)', dose_mg_kg: 1.0, formula_desc: '1 g por cada kg de peso' },
+            { id: 'carbon_cat', name: 'Carbón Activado (Intoxicación)', dose_mg_kg: 1.0, formula_desc: '1 g por cada kg de peso' },
             { id: 'tramadol_cat', name: 'Tramadol (Dolor Fuerte)', dose_mg_kg: 1.0, formula_desc: '1.0 mg por cada kg de peso' },
             { id: 'vitk_cat', name: 'Vitamina K (Raticidas)', dose_mg_kg: 2.5, formula_desc: '2.5 mg por cada kg de peso' }
         ]
@@ -1906,7 +2799,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         if (species === 'gato') {
-            doseWarningText.innerText = "Â¡CUIDADO! Muchos medicamentos humanos (como el paracetamol o ibuprofeno) son MORTALES para los gatos. Solo usa opciones listadas.";
+            doseWarningText.innerText = "¡CUIDADO! Muchos medicamentos humanos (como el paracetamol o ibuprofeno) son MORTALES para los gatos. Solo usa opciones listadas.";
             doseWarningText.style.display = 'block';
         } else {
             doseWarningText.style.display = 'none';
@@ -1922,7 +2815,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCalculateDose.addEventListener('click', () => {
             const weight = parseFloat(doseWeight.value);
             if (isNaN(weight) || weight <= 0) {
-                alert("Por favor ingresa un peso vÃ¡lido en Kg.");
+                alert("Por favor ingresa un peso válido en Kg.");
                 return;
             }
             
@@ -1939,7 +2832,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 doseResultValue.innerText = `${(weight * 1).toFixed(1)} Gramos`;
             }
             
-            doseResultMath.innerText = `CÃ¡lculo: ${weight} kg x ${med.formula_desc} = ${doseResultValue.innerText}`;
+            doseResultMath.innerText = `Cálculo: ${weight} kg x ${med.formula_desc} = ${doseResultValue.innerText}`;
             doseResultContainer.style.display = 'block';
         });
     }
@@ -1980,13 +2873,9 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingSos.style.display = 'block';
         
         try {
-            const idToken = window.firebaseAuth && window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
             const response = await fetch('/api/emergency_sos', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + idToken
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ emergency_type: emergencyType })
             });
             const data = await response.json();
@@ -2002,7 +2891,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             loadingSos.style.display = 'none';
             resultSos.style.display = 'block';
-            resultTextSos.innerHTML = '<span style="color:red">Fallo de conexiÃ³n. ACUDE AL VETERINARIO INMEDIATAMENTE.</span>';
+            resultTextSos.innerHTML = '<span style="color:red">Fallo de conexión. ACUDE AL VETERINARIO INMEDIATAMENTE.</span>';
         }
     }
 
@@ -2030,10 +2919,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// LÃ“GICA DE PESTAÃ‘AS (BOTTOM NAVIGATION)
+// LÓGICA DE PESTAÑAS (BOTTOM NAVIGATION)
 // ==========================================
 window.switchTab = function(tabId) {
-    // 1. Ocultar todas las pestaÃ±as
+    // 1. Ocultar todas las pestañas
     document.querySelectorAll('.app-tab').forEach(tab => {
         tab.classList.remove('active-tab');
     });
@@ -2051,7 +2940,7 @@ window.switchTab = function(tabId) {
 };
 
 // ==========================================
-// LÃ“GICA DE PERFIL Y AVATAR
+// LÓGICA DE PERFIL Y AVATAR
 // ==========================================
 window.toggleTheme = function() {
     const htmlObj = document.documentElement;
@@ -2064,7 +2953,7 @@ window.toggleTheme = function() {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Eventos de la pestaÃ±a Perfil
+    // Eventos de la pestaña Perfil
     const btnTheme = document.getElementById('btn-profile-theme');
     if(btnTheme) btnTheme.addEventListener('click', window.toggleTheme);
 
@@ -2093,12 +2982,12 @@ window.addEventListener('DOMContentLoaded', () => {
                         
                         if (userData.subscriptionStatus !== 'active' && now <= userData.trialEndsAt) {
                             const daysLeft = Math.ceil((userData.trialEndsAt - now) / (1000 * 60 * 60 * 24));
-                            if (titleEl) titleEl.innerText = "Â¡SuscripciÃ³n UltraPaws!";
-                            if (subtitleEl) subtitleEl.innerText = "Te quedan " + daysLeft + " dÃ­as de prueba gratuita. AdelÃ¡ntate y asegura tu acceso ininterrumpido a todas las funciones premium para el cuidado de tu mascota.";
+                            if (titleEl) titleEl.innerText = "¡Suscripción UltraPaws!";
+                            if (subtitleEl) subtitleEl.innerText = "Te quedan " + daysLeft + " días de prueba gratuita. Adelántate y asegura tu acceso ininterrumpido a todas las funciones premium para el cuidado de tu mascota.";
                             const btnShowPaypal = document.getElementById('btn-show-paypal');
                             if (btnShowPaypal) btnShowPaypal.style.display = 'block';
                         } else if (userData.subscriptionStatus === 'active') {
-                            if (titleEl) titleEl.innerText = "Â¡SuscripciÃ³n Activa!";
+                            if (titleEl) titleEl.innerText = "¡Suscripción Activa!";
                             if (subtitleEl) subtitleEl.innerText = "Gracias por ser parte de la familia UltraPaws. Tienes acceso completo a todas las funciones premium.";
                             const btnShowPaypal = document.getElementById('btn-show-paypal');
                             if (btnShowPaypal) btnShowPaypal.style.display = 'none';
@@ -2114,7 +3003,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const btnShowPaypal = document.getElementById('btn-show-paypal');
             const paypalContainer = document.getElementById('paypal-button-container');
             if (btnShowPaypal && paypalContainer && paypalContainer.style.display !== 'block') {
-                if (!titleEl || titleEl.innerText !== "Â¡SuscripciÃ³n Activa!") {
+                if (!titleEl || titleEl.innerText !== "¡Suscripción Activa!") {
                     btnShowPaypal.style.display = 'block';
                 }
                 paypalContainer.style.display = 'none';
@@ -2140,12 +3029,12 @@ window.addEventListener('DOMContentLoaded', () => {
                     await window.firebaseAuth.signOut(window.firebaseAuth.auth);
                 }
             } catch (error) {
-                console.error("Error al cerrar sesiÃ³n", error);
+                console.error("Error al cerrar sesión", error);
             }
         });
     }
 
-    // Subida de Avatar (CompresiÃ³n)
+    // Subida de Avatar (Compresión)
     const avatarContainer = document.getElementById('profile-avatar-container');
     const avatarInput = document.getElementById('avatar-input');
     const avatarImg = document.getElementById('profile-avatar-img');
@@ -2205,4 +3094,3 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
