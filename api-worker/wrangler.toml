@@ -1,0 +1,6 @@
+name = "nutripaws-api"
+main = "src/index.js"
+compatibility_date = "2024-03-01"
+
+[vars]
+FIREBASE_PROJECT_ID = "nutripaws-c0d81"

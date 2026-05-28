@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const API_BASE = (window.location.hostname === 'appassets.androidplatform.net' || window.location.hostname === 'localhost' || window.location.protocol === 'file:')
+        ? 'https://nutripaws-api.zzapata-dev.workers.dev'
+        : '';
+
     // --- SISTEMA DE TOASTS ---
     window.showToast = function(msg, type = 'info') {
         let container = document.getElementById('toast-container');
@@ -698,7 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const idToken = window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
-            const res = await fetch('/api/process_medical_record', {
+            const res = await fetch(`${API_BASE}/api/process_medical_record`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -767,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const idToken = window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
-                const res = await fetch('/api/analyze_document', {
+                const res = await fetch(`${API_BASE}/api/analyze_document`, {
                     method: 'POST',
                     headers: {
                         'Authorization': 'Bearer ' + idToken
@@ -836,7 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const idToken = window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
                 // Hacer POST al backend
-                const res = await fetch('/api/skinguard/analyze', {
+                const res = await fetch(`${API_BASE}/api/skinguard/analyze`, {
                     method: 'POST',
                     headers: {
                         'Authorization': 'Bearer ' + idToken
@@ -1896,6 +1900,10 @@ window.generatePDFReport = function(pet) {
 // NUEVAS FUNCIONES: CALCULADORA DE DOSIS Y EMERGENCIAS SOS
 // =========================================================================
 document.addEventListener('DOMContentLoaded', () => {
+    const API_BASE = (window.location.hostname === 'appassets.androidplatform.net' || window.location.hostname === 'localhost' || window.location.protocol === 'file:')
+        ? 'https://nutripaws-api.zzapata-dev.workers.dev'
+        : '';
+
     // 1. Calculadora de Dosificación
     const doseSpecies = document.getElementById('dose-species');
     const doseWeight = document.getElementById('dose-weight');
@@ -2013,7 +2021,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const idToken = window.firebaseAuth && window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
-            const response = await fetch('/api/emergency_sos', {
+            const response = await fetch(`${API_BASE}/api/emergency_sos`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
