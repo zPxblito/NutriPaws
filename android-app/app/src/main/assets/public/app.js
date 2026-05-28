@@ -1,4 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- SISTEMA DE TOASTS ---
+    window.showToast = function(msg, type = 'info') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = `custom-toast ${type}`;
+        let icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-right:8px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+        if(type === 'error') icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-right:8px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        if(type === 'warning') icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-right:8px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+        if(type === 'info') icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-right:8px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+        const messageStr = (typeof msg === 'string') ? msg : (msg && msg.message ? msg.message : String(msg));
+        toast.innerHTML = `<span style="font-size: 1.2rem;">${icon}</span><span class="custom-toast-message">${messageStr.replace(/\n/g, '<br>')}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    };
+
+    window.alert = function(msg) {
+        let type = 'info';
+        let msgLower = String(msg).toLowerCase();
+        if(msgLower.includes('error') || msgLower.includes('falló') || msgLower.includes('incorrecto') || msgLower.includes('inválido')) {
+            type = 'error';
+        } else if (msgLower.includes('éxito') || msgLower.includes('aprobada') || msgLower.includes('procesado')) {
+            type = 'success';
+        }
+        window.showToast(msg, type);
+    };
+    // -------------------------
+
     // --- LÓGICA DE VISTAS (SPA) ---
     const viewLogin = document.getElementById('view-login');
     const viewDashboard = document.getElementById('view-dashboard');
@@ -662,9 +697,13 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = true;
         
         try {
+            const idToken = window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
             const res = await fetch('/api/process_medical_record', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + idToken
+                },
                 body: JSON.stringify({text: text})
             });
             
@@ -703,6 +742,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.target.files[0];
             if (!file) return;
 
+            // Validar tamaño: máx 10MB
+            const MAX_SIZE_MB = 4;
+            if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+                alert(`El archivo es demasiado grande (${(file.size / 1024 / 1024).toFixed(1)} MB). Máximo permitido: ${MAX_SIZE_MB} MB.`);
+                inputMedDoc.value = '';
+                return;
+            }
+
+            // Validar tipo
+            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Tipo de archivo no soportado. Por favor sube un PDF o una imagen (JPG, PNG, WEBP).');
+                inputMedDoc.value = '';
+                return;
+            }
+
             const oldText = btnUploadMed.innerHTML;
             btnUploadMed.innerHTML = "Subiendo...";
             btnUploadMed.disabled = true;
@@ -711,8 +766,12 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('document', file);
 
             try {
+                const idToken = window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
                 const res = await fetch('/api/analyze_document', {
                     method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + idToken
+                    },
                     body: formData
                 });
                 
@@ -747,6 +806,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.target.files[0];
             if (!file) return;
 
+            // Validar tamaño: máx 5MB
+            const MAX_IMG_MB = 4;
+            if (file.size > MAX_IMG_MB * 1024 * 1024) {
+                alert(`La imagen es demasiado grande (${(file.size / 1024 / 1024).toFixed(1)} MB). Máximo permitido: ${MAX_IMG_MB} MB.`);
+                sgInput.value = '';
+                return;
+            }
+
+            // Validar tipo
+            const allowedImgTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            if (!allowedImgTypes.includes(file.type)) {
+                alert('Solo se aceptan imágenes (JPG, PNG, WEBP) para el análisis de piel.');
+                sgInput.value = '';
+                return;
+            }
+
             const uploadContent = document.getElementById('skinguard-upload-content');
             const loadingUI = document.getElementById('skinguard-loading');
             const resultsDiv = document.getElementById('skinguard-results');
@@ -759,9 +834,13 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('image', file);
 
             try {
+                const idToken = window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
                 // Hacer POST al backend
                 const res = await fetch('/api/skinguard/analyze', {
                     method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + idToken
+                    },
                     body: formData
                 });
                 
@@ -842,943 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdownMenu.style.display = 'none';
     });
 
-    const dbRazas = {
-    "perros": [
-        {
-            "id": "criollo",
-            "name": "Criollo / Mestizo"
-        },
-        {
-            "id": "affenpinscher",
-            "name": "Affenpinscher"
-        },
-        {
-            "id": "african-wild",
-            "name": "Wild African"
-        },
-        {
-            "id": "airedale",
-            "name": "Airedale"
-        },
-        {
-            "id": "akita",
-            "name": "Akita"
-        },
-        {
-            "id": "appenzeller",
-            "name": "Appenzeller"
-        },
-        {
-            "id": "australian-kelpie",
-            "name": "Kelpie Australian"
-        },
-        {
-            "id": "australian-shepherd",
-            "name": "Shepherd Australian"
-        },
-        {
-            "id": "bakharwal-indian",
-            "name": "Indian Bakharwal"
-        },
-        {
-            "id": "basenji",
-            "name": "Basenji"
-        },
-        {
-            "id": "beagle",
-            "name": "Beagle"
-        },
-        {
-            "id": "bluetick",
-            "name": "Bluetick"
-        },
-        {
-            "id": "borzoi",
-            "name": "Borzoi"
-        },
-        {
-            "id": "bouvier",
-            "name": "Bouvier"
-        },
-        {
-            "id": "boxer",
-            "name": "Boxer"
-        },
-        {
-            "id": "brabancon",
-            "name": "Brabancon"
-        },
-        {
-            "id": "briard",
-            "name": "Briard"
-        },
-        {
-            "id": "buhund-norwegian",
-            "name": "Norwegian Buhund"
-        },
-        {
-            "id": "bulldog-boston",
-            "name": "Boston Bulldog"
-        },
-        {
-            "id": "bulldog-english",
-            "name": "English Bulldog"
-        },
-        {
-            "id": "bulldog-french",
-            "name": "French Bulldog"
-        },
-        {
-            "id": "bullterrier-staffordshire",
-            "name": "Staffordshire Bullterrier"
-        },
-        {
-            "id": "cattledog-australian",
-            "name": "Australian Cattledog"
-        },
-        {
-            "id": "cavapoo",
-            "name": "Cavapoo"
-        },
-        {
-            "id": "chihuahua",
-            "name": "Chihuahua"
-        },
-        {
-            "id": "chippiparai-indian",
-            "name": "Indian Chippiparai"
-        },
-        {
-            "id": "chow",
-            "name": "Chow"
-        },
-        {
-            "id": "clumber",
-            "name": "Clumber"
-        },
-        {
-            "id": "cockapoo",
-            "name": "Cockapoo"
-        },
-        {
-            "id": "collie-border",
-            "name": "Border Collie"
-        },
-        {
-            "id": "coonhound",
-            "name": "Coonhound"
-        },
-        {
-            "id": "corgi-cardigan",
-            "name": "Cardigan Corgi"
-        },
-        {
-            "id": "cotondetulear",
-            "name": "Cotondetulear"
-        },
-        {
-            "id": "dachshund",
-            "name": "Dachshund"
-        },
-        {
-            "id": "dalmatian",
-            "name": "Dalmatian"
-        },
-        {
-            "id": "dane-great",
-            "name": "Great Dane"
-        },
-        {
-            "id": "danish-swedish",
-            "name": "Swedish Danish"
-        },
-        {
-            "id": "deerhound-scottish",
-            "name": "Scottish Deerhound"
-        },
-        {
-            "id": "dhole",
-            "name": "Dhole"
-        },
-        {
-            "id": "dingo",
-            "name": "Dingo"
-        },
-        {
-            "id": "doberman",
-            "name": "Doberman"
-        },
-        {
-            "id": "elkhound-norwegian",
-            "name": "Norwegian Elkhound"
-        },
-        {
-            "id": "entlebucher",
-            "name": "Entlebucher"
-        },
-        {
-            "id": "eskimo",
-            "name": "Eskimo"
-        },
-        {
-            "id": "finnish-lapphund",
-            "name": "Lapphund Finnish"
-        },
-        {
-            "id": "frise-bichon",
-            "name": "Bichon Frise"
-        },
-        {
-            "id": "gaddi-indian",
-            "name": "Indian Gaddi"
-        },
-        {
-            "id": "german-shepherd",
-            "name": "Shepherd German"
-        },
-        {
-            "id": "greyhound-indian",
-            "name": "Indian Greyhound"
-        },
-        {
-            "id": "greyhound-italian",
-            "name": "Italian Greyhound"
-        },
-        {
-            "id": "groenendael",
-            "name": "Groenendael"
-        },
-        {
-            "id": "havanese",
-            "name": "Havanese"
-        },
-        {
-            "id": "hound-afghan",
-            "name": "Afghan Hound"
-        },
-        {
-            "id": "hound-basset",
-            "name": "Basset Hound"
-        },
-        {
-            "id": "hound-blood",
-            "name": "Blood Hound"
-        },
-        {
-            "id": "hound-english",
-            "name": "English Hound"
-        },
-        {
-            "id": "hound-ibizan",
-            "name": "Ibizan Hound"
-        },
-        {
-            "id": "hound-plott",
-            "name": "Plott Hound"
-        },
-        {
-            "id": "hound-walker",
-            "name": "Walker Hound"
-        },
-        {
-            "id": "husky",
-            "name": "Husky"
-        },
-        {
-            "id": "keeshond",
-            "name": "Keeshond"
-        },
-        {
-            "id": "kelpie",
-            "name": "Kelpie"
-        },
-        {
-            "id": "kombai",
-            "name": "Kombai"
-        },
-        {
-            "id": "komondor",
-            "name": "Komondor"
-        },
-        {
-            "id": "kuvasz",
-            "name": "Kuvasz"
-        },
-        {
-            "id": "labradoodle",
-            "name": "Labradoodle"
-        },
-        {
-            "id": "labrador",
-            "name": "Labrador"
-        },
-        {
-            "id": "leonberg",
-            "name": "Leonberg"
-        },
-        {
-            "id": "lhasa",
-            "name": "Lhasa"
-        },
-        {
-            "id": "malamute",
-            "name": "Malamute"
-        },
-        {
-            "id": "malinois",
-            "name": "Malinois"
-        },
-        {
-            "id": "maltese",
-            "name": "Maltese"
-        },
-        {
-            "id": "mastiff-bull",
-            "name": "Bull Mastiff"
-        },
-        {
-            "id": "mastiff-english",
-            "name": "English Mastiff"
-        },
-        {
-            "id": "mastiff-indian",
-            "name": "Indian Mastiff"
-        },
-        {
-            "id": "mastiff-tibetan",
-            "name": "Tibetan Mastiff"
-        },
-        {
-            "id": "mexicanhairless",
-            "name": "Mexicanhairless"
-        },
-        {
-            "id": "mix",
-            "name": "Mix"
-        },
-        {
-            "id": "mountain-bernese",
-            "name": "Bernese Mountain"
-        },
-        {
-            "id": "mountain-swiss",
-            "name": "Swiss Mountain"
-        },
-        {
-            "id": "mudhol-indian",
-            "name": "Indian Mudhol"
-        },
-        {
-            "id": "newfoundland",
-            "name": "Newfoundland"
-        },
-        {
-            "id": "otterhound",
-            "name": "Otterhound"
-        },
-        {
-            "id": "ovcharka-caucasian",
-            "name": "Caucasian Ovcharka"
-        },
-        {
-            "id": "papillon",
-            "name": "Papillon"
-        },
-        {
-            "id": "pariah-indian",
-            "name": "Indian Pariah"
-        },
-        {
-            "id": "pekinese",
-            "name": "Pekinese"
-        },
-        {
-            "id": "pembroke",
-            "name": "Pembroke"
-        },
-        {
-            "id": "pinscher-miniature",
-            "name": "Miniature Pinscher"
-        },
-        {
-            "id": "pitbull",
-            "name": "Pitbull"
-        },
-        {
-            "id": "pointer-german",
-            "name": "German Pointer"
-        },
-        {
-            "id": "pointer-germanlonghair",
-            "name": "Germanlonghair Pointer"
-        },
-        {
-            "id": "pomeranian",
-            "name": "Pomeranian"
-        },
-        {
-            "id": "poodle-medium",
-            "name": "Medium Poodle"
-        },
-        {
-            "id": "poodle-miniature",
-            "name": "Miniature Poodle"
-        },
-        {
-            "id": "poodle-standard",
-            "name": "Standard Poodle"
-        },
-        {
-            "id": "poodle-toy",
-            "name": "Toy Poodle"
-        },
-        {
-            "id": "pug",
-            "name": "Pug"
-        },
-        {
-            "id": "puggle",
-            "name": "Puggle"
-        },
-        {
-            "id": "pyrenees",
-            "name": "Pyrenees"
-        },
-        {
-            "id": "rajapalayam-indian",
-            "name": "Indian Rajapalayam"
-        },
-        {
-            "id": "redbone",
-            "name": "Redbone"
-        },
-        {
-            "id": "retriever-chesapeake",
-            "name": "Chesapeake Retriever"
-        },
-        {
-            "id": "retriever-curly",
-            "name": "Curly Retriever"
-        },
-        {
-            "id": "retriever-flatcoated",
-            "name": "Flatcoated Retriever"
-        },
-        {
-            "id": "retriever-golden",
-            "name": "Golden Retriever"
-        },
-        {
-            "id": "ridgeback-rhodesian",
-            "name": "Rhodesian Ridgeback"
-        },
-        {
-            "id": "rottweiler",
-            "name": "Rottweiler"
-        },
-        {
-            "id": "rough-collie",
-            "name": "Collie Rough"
-        },
-        {
-            "id": "saluki",
-            "name": "Saluki"
-        },
-        {
-            "id": "samoyed",
-            "name": "Samoyed"
-        },
-        {
-            "id": "schipperke",
-            "name": "Schipperke"
-        },
-        {
-            "id": "schnauzer-giant",
-            "name": "Giant Schnauzer"
-        },
-        {
-            "id": "schnauzer-miniature",
-            "name": "Miniature Schnauzer"
-        },
-        {
-            "id": "segugio-italian",
-            "name": "Italian Segugio"
-        },
-        {
-            "id": "setter-english",
-            "name": "English Setter"
-        },
-        {
-            "id": "setter-gordon",
-            "name": "Gordon Setter"
-        },
-        {
-            "id": "setter-irish",
-            "name": "Irish Setter"
-        },
-        {
-            "id": "sharpei",
-            "name": "Sharpei"
-        },
-        {
-            "id": "sheepdog-english",
-            "name": "English Sheepdog"
-        },
-        {
-            "id": "sheepdog-indian",
-            "name": "Indian Sheepdog"
-        },
-        {
-            "id": "sheepdog-shetland",
-            "name": "Shetland Sheepdog"
-        },
-        {
-            "id": "shiba",
-            "name": "Shiba"
-        },
-        {
-            "id": "shihtzu",
-            "name": "Shihtzu"
-        },
-        {
-            "id": "spaniel-blenheim",
-            "name": "Blenheim Spaniel"
-        },
-        {
-            "id": "spaniel-brittany",
-            "name": "Brittany Spaniel"
-        },
-        {
-            "id": "spaniel-cocker",
-            "name": "Cocker Spaniel"
-        },
-        {
-            "id": "spaniel-irish",
-            "name": "Irish Spaniel"
-        },
-        {
-            "id": "spaniel-japanese",
-            "name": "Japanese Spaniel"
-        },
-        {
-            "id": "spaniel-sussex",
-            "name": "Sussex Spaniel"
-        },
-        {
-            "id": "spaniel-welsh",
-            "name": "Welsh Spaniel"
-        },
-        {
-            "id": "spitz-indian",
-            "name": "Indian Spitz"
-        },
-        {
-            "id": "spitz-japanese",
-            "name": "Japanese Spitz"
-        },
-        {
-            "id": "springer-english",
-            "name": "English Springer"
-        },
-        {
-            "id": "stbernard",
-            "name": "Stbernard"
-        },
-        {
-            "id": "terrier-american",
-            "name": "American Terrier"
-        },
-        {
-            "id": "terrier-andalusian",
-            "name": "Andalusian Terrier"
-        },
-        {
-            "id": "terrier-australian",
-            "name": "Australian Terrier"
-        },
-        {
-            "id": "terrier-bedlington",
-            "name": "Bedlington Terrier"
-        },
-        {
-            "id": "terrier-border",
-            "name": "Border Terrier"
-        },
-        {
-            "id": "terrier-boston",
-            "name": "Boston Terrier"
-        },
-        {
-            "id": "terrier-cairn",
-            "name": "Cairn Terrier"
-        },
-        {
-            "id": "terrier-dandie",
-            "name": "Dandie Terrier"
-        },
-        {
-            "id": "terrier-fox",
-            "name": "Fox Terrier"
-        },
-        {
-            "id": "terrier-irish",
-            "name": "Irish Terrier"
-        },
-        {
-            "id": "terrier-kerryblue",
-            "name": "Kerryblue Terrier"
-        },
-        {
-            "id": "terrier-lakeland",
-            "name": "Lakeland Terrier"
-        },
-        {
-            "id": "terrier-norfolk",
-            "name": "Norfolk Terrier"
-        },
-        {
-            "id": "terrier-norwich",
-            "name": "Norwich Terrier"
-        },
-        {
-            "id": "terrier-patterdale",
-            "name": "Patterdale Terrier"
-        },
-        {
-            "id": "terrier-russell",
-            "name": "Russell Terrier"
-        },
-        {
-            "id": "terrier-scottish",
-            "name": "Scottish Terrier"
-        },
-        {
-            "id": "terrier-sealyham",
-            "name": "Sealyham Terrier"
-        },
-        {
-            "id": "terrier-silky",
-            "name": "Silky Terrier"
-        },
-        {
-            "id": "terrier-tibetan",
-            "name": "Tibetan Terrier"
-        },
-        {
-            "id": "terrier-toy",
-            "name": "Toy Terrier"
-        },
-        {
-            "id": "terrier-welsh",
-            "name": "Welsh Terrier"
-        },
-        {
-            "id": "terrier-westhighland",
-            "name": "Westhighland Terrier"
-        },
-        {
-            "id": "terrier-wheaten",
-            "name": "Wheaten Terrier"
-        },
-        {
-            "id": "terrier-yorkshire",
-            "name": "Yorkshire Terrier"
-        },
-        {
-            "id": "tervuren",
-            "name": "Tervuren"
-        },
-        {
-            "id": "vizsla",
-            "name": "Vizsla"
-        },
-        {
-            "id": "waterdog-spanish",
-            "name": "Spanish Waterdog"
-        },
-        {
-            "id": "weimaraner",
-            "name": "Weimaraner"
-        },
-        {
-            "id": "whippet",
-            "name": "Whippet"
-        },
-        {
-            "id": "wolfhound-irish",
-            "name": "Irish Wolfhound"
-        }
-    ],
-    "gatos": [
-        {
-            "id": "criollo",
-            "name": "Criollo / Mestizo"
-        },
-        {
-            "id": "abys",
-            "name": "Abyssinian"
-        },
-        {
-            "id": "aege",
-            "name": "Aegean"
-        },
-        {
-            "id": "abob",
-            "name": "American Bobtail"
-        },
-        {
-            "id": "acur",
-            "name": "American Curl"
-        },
-        {
-            "id": "asho",
-            "name": "American Shorthair"
-        },
-        {
-            "id": "awir",
-            "name": "American Wirehair"
-        },
-        {
-            "id": "amau",
-            "name": "Arabian Mau"
-        },
-        {
-            "id": "amis",
-            "name": "Australian Mist"
-        },
-        {
-            "id": "bali",
-            "name": "Balinese"
-        },
-        {
-            "id": "bamb",
-            "name": "Bambino"
-        },
-        {
-            "id": "beng",
-            "name": "Bengal"
-        },
-        {
-            "id": "birm",
-            "name": "Birman"
-        },
-        {
-            "id": "bomb",
-            "name": "Bombay"
-        },
-        {
-            "id": "bslo",
-            "name": "British Longhair"
-        },
-        {
-            "id": "bsho",
-            "name": "British Shorthair"
-        },
-        {
-            "id": "bure",
-            "name": "Burmese"
-        },
-        {
-            "id": "buri",
-            "name": "Burmilla"
-        },
-        {
-            "id": "cspa",
-            "name": "California Spangled"
-        },
-        {
-            "id": "ctif",
-            "name": "Chantilly-Tiffany"
-        },
-        {
-            "id": "char",
-            "name": "Chartreux"
-        },
-        {
-            "id": "chau",
-            "name": "Chausie"
-        },
-        {
-            "id": "chee",
-            "name": "Cheetoh"
-        },
-        {
-            "id": "csho",
-            "name": "Colorpoint Shorthair"
-        },
-        {
-            "id": "crex",
-            "name": "Cornish Rex"
-        },
-        {
-            "id": "cymr",
-            "name": "Cymric"
-        },
-        {
-            "id": "cypr",
-            "name": "Cyprus"
-        },
-        {
-            "id": "drex",
-            "name": "Devon Rex"
-        },
-        {
-            "id": "dons",
-            "name": "Donskoy"
-        },
-        {
-            "id": "lihu",
-            "name": "Dragon Li"
-        },
-        {
-            "id": "emau",
-            "name": "Egyptian Mau"
-        },
-        {
-            "id": "ebur",
-            "name": "European Burmese"
-        },
-        {
-            "id": "esho",
-            "name": "Exotic Shorthair"
-        },
-        {
-            "id": "hbro",
-            "name": "Havana Brown"
-        },
-        {
-            "id": "hima",
-            "name": "Himalayan"
-        },
-        {
-            "id": "jbob",
-            "name": "Japanese Bobtail"
-        },
-        {
-            "id": "java",
-            "name": "Javanese"
-        },
-        {
-            "id": "khao",
-            "name": "Khao Manee"
-        },
-        {
-            "id": "kora",
-            "name": "Korat"
-        },
-        {
-            "id": "kuri",
-            "name": "Kurilian"
-        },
-        {
-            "id": "lape",
-            "name": "LaPerm"
-        },
-        {
-            "id": "mcoo",
-            "name": "Maine Coon"
-        },
-        {
-            "id": "mala",
-            "name": "Malayan"
-        },
-        {
-            "id": "manx",
-            "name": "Manx"
-        },
-        {
-            "id": "munc",
-            "name": "Munchkin"
-        },
-        {
-            "id": "nebe",
-            "name": "Nebelung"
-        },
-        {
-            "id": "norw",
-            "name": "Norwegian Forest Cat"
-        },
-        {
-            "id": "ocic",
-            "name": "Ocicat"
-        },
-        {
-            "id": "orie",
-            "name": "Oriental"
-        },
-        {
-            "id": "pers",
-            "name": "Persian"
-        },
-        {
-            "id": "pixi",
-            "name": "Pixie-bob"
-        },
-        {
-            "id": "raga",
-            "name": "Ragamuffin"
-        },
-        {
-            "id": "ragd",
-            "name": "Ragdoll"
-        },
-        {
-            "id": "rblu",
-            "name": "Russian Blue"
-        },
-        {
-            "id": "sava",
-            "name": "Savannah"
-        },
-        {
-            "id": "sfol",
-            "name": "Scottish Fold"
-        },
-        {
-            "id": "srex",
-            "name": "Selkirk Rex"
-        },
-        {
-            "id": "siam",
-            "name": "Siamese"
-        },
-        {
-            "id": "sibe",
-            "name": "Siberian"
-        },
-        {
-            "id": "sing",
-            "name": "Singapura"
-        },
-        {
-            "id": "snow",
-            "name": "Snowshoe"
-        },
-        {
-            "id": "soma",
-            "name": "Somali"
-        },
-        {
-            "id": "sphy",
-            "name": "Sphynx"
-        },
-        {
-            "id": "tonk",
-            "name": "Tonkinese"
-        },
-        {
-            "id": "toyg",
-            "name": "Toyger"
-        },
-        {
-            "id": "tang",
-            "name": "Turkish Angora"
-        },
-        {
-"name": "York Chocolate"
-        }
-    ]
-};
+    const dbRazas = window.dbRazas;
 
     const createRazaSelect = document.getElementById('create-pet-raza');
 
@@ -2051,11 +1194,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         renderPets();
                         updatePetSelectors();
                         
-                        if (activePetIndex !== -1) {
-                            updateDashboardDetails();
-                        } else {
-                            // Redibuja la vista base, renderPets se encargará de mostrar el placeholder.
-                            document.getElementById('dashboard-pet-name').innerText = '--';
+                        if (activePetIndex === -1) {
                             showView(viewDashboard); 
                         }
                     } catch (error) {
@@ -2873,9 +2012,13 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingSos.style.display = 'block';
         
         try {
+            const idToken = window.firebaseAuth && window.firebaseAuth.auth.currentUser ? await window.firebaseAuth.auth.currentUser.getIdToken() : '';
             const response = await fetch('/api/emergency_sos', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + idToken
+                },
                 body: JSON.stringify({ emergency_type: emergencyType })
             });
             const data = await response.json();
@@ -3094,3 +2237,4 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
