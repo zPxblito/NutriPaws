@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_BASE = (window.location.hostname === 'appassets.androidplatform.net' || window.location.hostname === 'localhost' || window.location.protocol === 'file:')
-        ? 'https://nutripaws-api.zzapata-dev.workers.dev'
-        : '';
+    const API_BASE = 'https://nutripaws-api.zzapata-dev.workers.dev';
 
     // --- SISTEMA DE TOASTS ---
     window.showToast = function(msg, type = 'info') {
@@ -1900,9 +1898,7 @@ window.generatePDFReport = function(pet) {
 // NUEVAS FUNCIONES: CALCULADORA DE DOSIS Y EMERGENCIAS SOS
 // =========================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const API_BASE = (window.location.hostname === 'appassets.androidplatform.net' || window.location.hostname === 'localhost' || window.location.protocol === 'file:')
-        ? 'https://nutripaws-api.zzapata-dev.workers.dev'
-        : '';
+    const API_BASE = 'https://nutripaws-api.zzapata-dev.workers.dev';
 
     // 1. Calculadora de Dosificación
     const doseSpecies = document.getElementById('dose-species');
